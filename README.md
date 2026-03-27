@@ -1,152 +1,210 @@
 <div align="center">
 
-# 💰 ArthaGPT
+<img src="https://img.shields.io/badge/ArthaGPT-India's%20AI%20Money%20Mentor-D4AF37?style=for-the-badge&labelColor=040A18" alt="ArthaGPT" />
 
-### India's AI Money Mentor
+# ArthaGPT
+
 **Your money. Finally understood.**
 
-*ET AI Hackathon 2026 — Track 9*
+*India's first multi-agent AI financial advisor — free, instant, and built for every Indian.*
 
-[![Gemini](https://img.shields.io/badge/Powered%20by-Gemini%203.1%20Pro-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
-[![GCP](https://img.shields.io/badge/Built%20on-Google%20Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)](https://cloud.google.com/)
-[![License](https://img.shields.io/badge/License-MIT-gold?style=for-the-badge)](LICENSE)
+<br/>
+
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Gemini](https://img.shields.io/badge/Gemini-3.1%20Pro-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![License](https://img.shields.io/badge/License-MIT-D4AF37?style=flat-square)](LICENSE)
+[![Node](https://img.shields.io/badge/Node-22+-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+
+<br/>
+
+> **ET AI Hackathon 2026 — Track 9**
 
 </div>
 
 ---
 
-## 🎯 The Problem
+## The Problem
 
-**95% of Indians have no financial plan.** A human advisor charges ₹25,000+/year and only serves HNIs. India has 14 crore demat account holders — ~9 crore have never consulted a financial advisor.
+**95% of Indians have no financial plan.**
 
-## 💡 Our Answer
+A qualified human advisor charges ₹25,000+/year and serves only HNIs. India has 14 crore demat account holders — roughly 9 crore have *never* consulted a financial advisor. The result: missed tax deductions, wrong mutual fund choices, no retirement plan, and chronic underinsurance.
 
-ArthaGPT is an AI-powered financial mentor that does what a ₹25,000/year human financial advisor does — **for every Indian with a phone, for free, in under 10 minutes.**
+## The Solution
 
-Upload your CAMS statement, enter your salary structure, tell us your goals — ArthaGPT gives you a personalised retirement roadmap, an exact tax regime comparison with step-by-step working, and a specific rebalancing plan for your mutual fund portfolio.
+ArthaGPT does what a ₹25,000/year human financial advisor does — **for every Indian with a phone, in under 10 minutes, for free.**
+
+Upload your CAMS statement → enter your salary structure → tell us your goals → get:
+- A personalised retirement roadmap with a specific monthly SIP target
+- An exact FY 2025-26 tax regime comparison with full step-by-step working
+- A fund-level mutual fund rebalancing plan with tax consequences
 
 ---
 
-## 🏗 Architecture
+## Demo
 
 ```
-┌─────────────────────────────────────────────────┐
-│              ArthaGPT Multi-Agent System          │
-├─────────────────────────────────────────────────┤
-│  Layer 1: Orchestrator (Gemini 3.1 Pro)          │
-│  ├── Routes requests to specialist agents        │
-│  ├── Manages state & session                     │
-│  └── Injects compliance guardrails               │
-├─────────────────────────────────────────────────┤
-│  Layer 2: Specialist Agents                       │
-│  ├── Portfolio Agent (XIRR, overlap, rebalance)  │
-│  ├── FIRE Agent (corpus, SIP, glidepath)         │
-│  └── Tax Agent (deterministic FY 2025-26 slabs)  │
-├─────────────────────────────────────────────────┤
-│  Layer 3: Tool Layer                              │
-│  ├── CASParser MCP (CAMS/KFintech PDF → JSON)    │
-│  ├── mfapi.in (NAV history for XIRR)             │
-│  ├── Tax Engine (hardcoded slabs, not LLM)        │
-│  └── XIRR Calculator (Newton-Raphson)             │
-├─────────────────────────────────────────────────┤
-│  Layer 4: Output Agents                           │
-│  ├── Narrative Agent (Gemini 3 Flash)             │
-│  └── Image Agent (Gemini 3.1 Flash Image)         │
-└─────────────────────────────────────────────────┘
+Onboarding (5 steps, ~2 min) → AI Processing (~8 sec) → Dashboard (3 modules)
 ```
 
-### Model Tier Strategy
-
-| Model | Role | Use Case |
-|-------|------|----------|
-| **Gemini 3.1 Pro** | Master reasoning engine | XIRR computation, tax regime comparison, FIRE calculations |
-| **Gemini 3 Flash** | Mid-complexity analysis | Portfolio summaries, narrative explanations |
-| **Gemini 2.5 Flash** | Conversational layer | Follow-up questions, reformatting outputs |
-| **Gemini 3.1 Flash Image** | Visual output | FIRE roadmap infographics, portfolio visual summaries |
+| Module | What you get |
+|--------|-------------|
+| **Portfolio X-Ray** | XIRR per fund, stock overlap heatmap, expense drag, rebalancing plan |
+| **FIRE Roadmap** | Inflation-adjusted corpus, required SIP, asset glidepath, insurance gap |
+| **Tax Wizard** | Old vs New regime comparison, HRA working, missed deductions, saved ₹ |
 
 ---
 
-## 🧩 Three Core Modules
+## Architecture
 
-### 1. MF Portfolio X-Ray
-- Upload CAMS/KFintech PDF → parse via CASParser
-- True XIRR per fund using Newton-Raphson method
-- Stock overlap heatmap across all fund holdings
-- Expense ratio drag: regular vs direct plan comparison
-- **Specific, fund-level rebalancing plan** with tax consequences
+```
+┌──────────────────────────────────────────────────────────┐
+│                 ArthaGPT Multi-Agent System               │
+├──────────────────────────────────────────────────────────┤
+│  Orchestrator  ─  Gemini 3.1 Pro                         │
+│  Routes requests · Manages session · Injects guardrails  │
+├────────────────┬─────────────────┬───────────────────────┤
+│  Portfolio     │  FIRE           │  Tax                  │
+│  Agent         │  Agent          │  Agent                │
+│  ─────────     │  ─────────      │  ──────               │
+│  XIRR calc     │  Corpus target  │  FY 2025-26 slabs     │
+│  Overlap map   │  SIP back-calc  │  HRA 3-way min        │
+│  Rebalance     │  Glidepath      │  Regime comparison    │
+├────────────────┴─────────────────┴───────────────────────┤
+│  Tool Layer                                               │
+│  CASParser MCP · mfapi.in NAV · Deterministic Engines    │
+├──────────────────────────────────────────────────────────┤
+│  Output Agents                                            │
+│  Narrative (Gemini 3 Flash) · Image (Gemini 3.1 Flash)   │
+└──────────────────────────────────────────────────────────┘
+```
 
-### 2. FIRE Path Planner
-- Inflation-adjusted corpus target (6% India-specific inflation)
-- 3% safe withdrawal rate (India-specific, not US 4% rule)
-- Month-by-month SIP allocation with equity/debt glidepath
-- **Interactive retirement age slider** — every figure recalculates client-side in real time
-- Insurance gap detection
+### Model Strategy
 
-### 3. Tax Wizard (FY 2025-26)
-- **Deterministic** tax engine — not LLM estimation
-- Full step-by-step working shown for both regimes
-- HRA exemption: three-way minimum formula with all values visible
-- Slab-by-slab tax breakdown (expandable)
-- Missed deduction detection with exact rupee savings
-- Ranked tax-saving instrument recommendations
-
----
-
-## 🛡 Compliance & Guardrails
-
-| Layer | Implementation |
-|-------|---------------|
-| **Input guardrails** | Rejects implausible inputs (age > 100, negative values), asks for correction |
-| **Calculation guardrails** | Flags anomalous XIRR (>100% or <-50%), asks user to verify |
-| **Output guardrails** | Qualified language only ("based on your inputs..."), no imperatives |
-| **SEBI Disclaimer** | Full mandatory disclaimer on every output screen |
-| **Audit trail** | "How we calculated this" panel — every agent call, tool call, model decision visible |
+| Model | Role |
+|-------|------|
+| **Gemini 3.1 Pro** | Master reasoning — XIRR, portfolio analysis, complex planning |
+| **Gemini 3 Flash** | Narrative — turning structured results into plain-language insights |
+| **Gemini 2.5 Flash** | Conversational follow-ups and output reformatting |
+| **Deterministic Engine** | Tax slabs, FIRE calculations — never LLM-estimated |
 
 ---
 
-## 🚀 Run Locally
+## Features
 
-**Prerequisites:** Node.js 18+
+### 📊 MF Portfolio X-Ray
+- Parse CAMS / KFintech PDF via CASParser API
+- True XIRR per fund using the Newton-Raphson method
+- Stock overlap heatmap across all holdings — spot hidden concentration risk
+- Expense ratio drag: regular vs direct plan cost comparison
+- Actionable, fund-level rebalancing plan with LTCG tax estimate for each switch
+
+### 🔥 FIRE Path Planner
+- Inflation-adjusted corpus target at 6% (India-specific, not US figures)
+- 3% safe withdrawal rate (conservative for India's inflation environment)
+- Interactive retirement age slider — every figure recalculates client-side instantly
+- Monthly SIP allocation with equity/debt glidepath to retirement
+- Insurance gap detection: 12× income rule vs declared cover
+
+### 🧾 Tax Wizard — FY 2025-26
+- **Deterministic engine** — never estimated by an LLM
+- Complete step-by-step working shown for both regimes
+- HRA exemption: three-way minimum calculation with all values visible
+- Slab-by-slab tax breakdown (expandable accordion)
+- Missed deduction panel with exact rupee savings at your marginal rate
+- Ranked instrument recommendations (ELSS, PPF, NPS) with savings calculation
+- Fully editable salary inputs — adjust any figure and results update instantly
+
+---
+
+## Compliance & Guardrails
+
+| Layer | What it does |
+|-------|-------------|
+| **Input validation** | Age 18–80, income ≥ ₹1L, no negative corpus values — with field-level error messages |
+| **Calculation guardrails** | `Math.max(0, ...)` on all financial inputs; NaN-proof throughout |
+| **Output guardrails** | Qualified language only; no imperative financial instructions |
+| **SEBI Disclaimer** | Full mandatory disclaimer on every analysis screen |
+| **Audit Trail** | "How we calculated this" panel — every agent call, model, tool, and latency visible |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 19, TypeScript 5, Tailwind CSS v4, Framer Motion, Recharts |
+| **Backend** | Node.js 22, Express, Vite 6 (dev middleware) |
+| **AI** | `@google/genai` SDK — Gemini 3.1 Pro, Gemini 3 Flash |
+| **Data** | CASParser API (CAMS PDF), mfapi.in (live NAV) |
+| **Design** | Navy `#040A18` + Gold `#D4AF37` palette, JetBrains Mono for financial figures |
+| **Build** | `tsc --noEmit` → 0 errors · `vite build` → 831 KB bundle |
+
+---
+
+## Getting Started
+
+**Prerequisites:** Node.js 22+ (Tailwind CSS v4 requires Node 20+), a Gemini API key
 
 ```bash
-# 1. Install dependencies
+# 1. Clone
+git clone https://github.com/coldboxer007/ArthGPT.git
+cd ArthGPT
+
+# 2. Use correct Node version (if you have nvm)
+nvm use   # reads .nvmrc → Node 22
+
+# 3. Install dependencies
 npm install
 
-# 2. Set your Gemini API key
+# 4. Add your Gemini API key
 echo "GEMINI_API_KEY=your_key_here" > .env.local
 
-# 3. Run the app
+# 5. Start the dev server
 npm run dev
 
-# Open http://localhost:3000
+# → http://localhost:3000
+```
+
+> The app works without a Gemini API key — Portfolio X-Ray falls back to realistic mock data. Tax Wizard and FIRE Roadmap are fully client-side deterministic engines that require no API key at all.
+
+---
+
+## Project Structure
+
+```
+ArthGPT/
+├── server.ts                  # Express + Vite dev server
+├── src/
+│   ├── App.tsx                # Root — UserProfile state, step routing
+│   ├── components/
+│   │   ├── Onboarding.tsx     # 5-step onboarding with full validation
+│   │   ├── Loading.tsx        # Multi-agent processing animation
+│   │   ├── Dashboard.tsx      # Sidebar + tab layout + audit trail
+│   │   ├── PortfolioXRay.tsx  # MF analysis (Gemini-powered)
+│   │   ├── FIRERoadmap.tsx    # FIRE calculator (client-side)
+│   │   └── TaxWizard.tsx      # Tax engine (client-side deterministic)
+│   └── server/
+│       ├── taxEngine.ts       # FY 2025-26 slab engine
+│       └── fireEngine.ts      # Corpus + SIP back-calculator
+└── .nvmrc                     # Node 22
 ```
 
 ---
 
-## 📊 Impact Quantification
+## Impact
 
-| Metric | Value | Assumption |
-|--------|-------|------------|
-| **Addressable users** | 4 crore | Literate smartphone users within ET's user base |
-| **Advisory cost displaced** | ₹60,000 Cr/year | 4Cr users × ₹15K/year RIA fee |
-| **ET revenue potential** | ₹800 Cr/year | 2Cr MAU × ₹400/user ad + affiliate revenue |
-| **Aggregate tax savings** | ₹9,000 Cr | 50L users × ₹30K avg missed deductions |
-| **GCP cost** | < $70 total | Sustainable within $5,000 credits |
-
----
-
-## 🔧 Tech Stack
-
-- **Frontend:** React 19 + TypeScript, Tailwind CSS v4, Recharts, Framer Motion
-- **Backend:** Express + Vite dev server, deterministic calculation engines
-- **AI:** Gemini 3.1 Pro (Vertex AI), Gemini 3 Flash, Gemini 2.5 Flash
-- **Data:** CASParser API (CAMS PDF), mfapi.in (NAV history)
-- **Design:** Custom navy + gold design system, JetBrains Mono for financial data
+| Metric | Estimate | Basis |
+|--------|----------|-------|
+| Addressable users | 4 crore | Literate smartphone users in ET's user base |
+| Advisory cost displaced | ₹60,000 Cr/yr | 4Cr users × ₹15K/yr RIA fee |
+| ET revenue potential | ₹800 Cr/yr | 2Cr MAU × ₹400/user (ads + affiliate) |
+| Aggregate tax savings enabled | ₹9,000 Cr | 50L users × ₹30K avg missed deductions |
+| Infrastructure cost | < $70 total | Well within $5,000 GCP credits |
 
 ---
 
-## 📄 License
+## License
 
-MIT — Built for ET AI Hackathon 2026 | Track 9
-
-**ArthaGPT — Your money. Finally understood.**
+MIT — Built for **ET AI Hackathon 2026, Track 9**
