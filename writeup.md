@@ -6,115 +6,102 @@
 
 ---
 
-### 1. Executive Summary
+### 1. Architectural Philosophy: The "Math vs. Mind" Framework
 
-**Problem:** 95% of Indians lack a formal financial plan. Professional advisors charge ₹25,000+/year, serving only HNIs. Average salaried Indians lose ₹15K–₹40K annually to suboptimal tax regime choices and "portfolio drag" from mutual fund overlap and regular-plan expense ratios.
-
-**Solution:** ChanakAI is India's first **fully autonomous multi-agent financial advisor**. It replaces a high-cost human advisor with 24 specialized AI agents across three deep-analysis pipelines: **Portfolio X-Ray**, **Tax Wizard**, and **FIRE Planner**. ChanakAI delivers institutional-grade financial planning in under 60 seconds, with built-in SEBI-compliant guardrails and real-time SSE audit trails.
-
----
-
-### 2. Multi-Agent Architecture (The "Mind")
-
-ChanakAI's core differentiator is its **custom multi-agent framework** built on 5 agent primitives. This allows for complex, branching financial reasoning that "brute-force" LLM wrappers cannot achieve.
-
-<div align="center">
-<img src="diagrams/multiagent.png" alt="Multi-Agent Orchestration Architecture" width="800" />
-<br/>
-<em>Fig 1: ChanakAI Multi-Agent Orchestration — 24 agents across 3 pipelines with cross-pipeline context sharing.</em>
-</div>
-
-#### 2.1 Agent Primitives (The Building Blocks)
-- **`DeterministicAgent`**: Pure TypeScript computation (Tax slabs, XIRR, Monte Carlo). No LLM calls. 100% reproducible.
-- **`LlmAgent`**: Reasoning-heavy tasks (Tax optimization, PDF extraction, Narrative generation) using Gemini 1.5/2.5/3 variants.
-- **`ParallelAgent`**: Fans out independent tasks concurrently (e.g., Stage 2 of every pipeline) via `Promise.allSettled`.
-- **`SequentialAgent`**: Chains agents on a shared `SessionState` where output of A feeds input of B.
-- **`LoopAgent`**: Iterates until an exit condition (Compliance Review/Fix cycles).
-
-#### 2.2 The Root Orchestrator & Context Sharing
-- **Intent Classifier**: Uses Gemini 2.5 Flash to route user queries to the correct pipeline or the **Advisory Engine**.
-- **AnalysisContext**: A global singleton that merges results from all 3 pipelines (e.g., Tax regime, XIRR, FIRE probability) into a unified object. This allows the Advisory Engine to answer questions like: *"Given my high portfolio XIRR and New Tax Regime savings, can I retire 2 years earlier?"*
-
----
-
-### 3. Math vs. Mind: The Compliance Framework
-
-Financial planning requires 100% numerical accuracy (Math) and nuanced reasoning (Mind). ChanakAI separates these to ensure regulatory compliance and enterprise readiness.
+ChanakAI is built on a fundamental separation of **Deterministic Computation (Math)** and **Heuristic Reasoning (Mind)**. Traditional AI advisors often fail by asking LLMs to perform arithmetic, leading to "hallucinated math." ChanakAI solves this by orchestrating **24 specialized agents** where every calculation is performed by TypeScript-native engines, while LLMs are reserved for intent classification, data extraction, and narrative generation.
 
 <div align="center">
 <img src="diagrams/mathvmind.png" alt="Math vs Mind Architecture" width="800" />
 <br/>
-<em>Fig 2: Math vs. Mind — Separation of deterministic computation from AI reasoning.</em>
+<em>Fig 1: Math vs. Mind — Decoupling verifiable computation from AI-driven advisory.</em>
 </div>
-
-- **The Math (Deterministic Layer)**: 
-  - **`XirrAgent`**: Implements Newton-Raphson iteration for true portfolio returns.
-  - **`TaxRegimeAgents`**: Hardcoded FY 2025-26 slab logic (deterministic).
-  - **`MonteCarloAgent`**: 1,000 simulations using seeded Mulberry32 PRNG.
-- **The Mind (AI Reasoning Layer)**:
-  - **`MacroAgent`**: Uses Gemini Flash with Google Search grounding to fetch live inflation/FD/Nifty data.
-  - **`ComplianceLoop`**: A `LoopAgent` that runs `ComplianceChecker` → `DisclaimerInjector`. It scans for:
-    1. Unlicensed advice (replaces "You should buy X" with "Historically, X has...").
-    2. Certainty claims (replaces "You will earn 15%" with "Projected 12% probability").
-    3. Missing SEBI disclaimers.
 
 ---
 
-### 4. Specialized Pipeline Inventories
+### 2. Multi-Agent Orchestration (The Custom Framework)
 
-#### 4.1 Portfolio X-Ray (8 Agents)
-- **`IngestionAgent`**: Resolves funds via MFapi.in.
-- **`XirrAgent`**: Computes time-weighted returns.
-- **`OverlapAgent`**: Identifies stock-level overlap (ISIN matching) across AMCs.
-- **`ExpenseAgent`**: Flags Regular-to-Direct plan switches with ₹ drag calculation.
-- **`RebalancingStrategist`**: (Gemini 2 Pro) Generates fund-level swap recommendations with tax-awareness.
+We built a custom agent orchestration framework in TypeScript (zero Python/LangChain dependencies) to ensure sub-100ms latency for computational tasks and robust SSE streaming.
 
-#### 4.2 Tax Wizard (7 Agents)
-- **`InputCollector`**: Gemini Vision parsing of Form 16 / Payslips.
-- **`OldRegimeAgent` / `NewRegimeAgent`**: Side-by-side deterministic slab working.
-- **`TaxOptimizer`**: (Gemini 2 Pro) Ranks missed deductions (80C, 80D, 80CCD1B) by liquidity and risk.
+#### 2.1 The Five Agent Primitives
+1.  **`DeterministicAgent`**: Executes pure TypeScript logic (e.g., `OldRegimeAgent` for tax slabs). Returns structured results with 0% variance.
+2.  **`LlmAgent`**: Utilizes Gemini (1.5/2.5/3) with strict JSON-mode schema enforcement for extraction and optimization tasks.
+3.  **`ParallelAgent`**: Implements a "fan-out" pattern using `Promise.allSettled`, allowing concurrent execution of independent analysis (e.g., XIRR, Overlap, and Benchmark analysis run in parallel).
+4.  **`SequentialAgent`**: Implements a "pipeline" pattern where a shared `SessionState` is mutated by agents in order.
+5.  **`LoopAgent`**: An "Autonomous Refiner" used for our **2-iteration Compliance Cycle**. It runs a generator → checker → injector loop until the output is SEBI-compliant.
 
-#### 4.3 FIRE Path Planner (9 Agents)
-- **`MonteCarloAgent`**: 1,000 simulations with realistic return distributions (12% mean ± 18% std dev).
-- **`SipGlidepathAgent`**: Binary search for required monthly SIP with 90% success probability.
-- **`RoadmapBuilder`**: (Gemini 3.1 Pro Preview) Generates the narrative personalized strategy prose.
+#### 2.2 Global State Management: `AnalysisContext`
+The `AnalysisContext` acts as a cross-pipeline blackboard. It merges the outputs of all three pipelines (Tax, Portfolio, FIRE) into a unified financial graph. This allows the **Root Orchestrator** to answer complex cross-domain questions (e.g., *"How does switching to the New Tax Regime affect my FIRE age?"*) by querying the merged state.
+
+---
+
+### 3. Pipeline Deep-Dives: 24 Specialized Agents
+
+<div align="center">
+<img src="diagrams/multiagent.png" alt="Multi-Agent Orchestration Architecture" width="800" />
+<br/>
+<em>Fig 2: ChanakAI Multi-Agent Pipeline Flow — Sequential stages with parallel execution.</em>
+</div>
+
+#### 3.1 Portfolio X-Ray (8 Agents)
+*   **Ingestion (Stage 1)**: `IngestionAgent` resolves ISINs and real-time NAVs via **MFapi.in**.
+*   **Analysis (Stage 2 - Parallel)**: 
+    *   `XirrAgent`: Newton-Raphson iteration for true portfolio IRR.
+    *   `OverlapAgent`: Stock-level ISIN matching to identify hidden concentration.
+    *   `ExpenseAgent`: Quantifies "Regular vs Direct" plan drag in absolute ₹ terms.
+    *   `BenchmarkAgent`: Comparison against Nifty 50/Midcap/Smallcap indices.
+*   **Optimization (Stage 3)**: `RebalancingStrategistAgent` (Gemini 2.5 Pro) generates specific Buy/Sell/Hold triggers with LTCG/STCG tax-awareness.
+
+#### 3.2 Tax Wizard (7 Agents)
+*   **Extraction**: `InputCollector` (Gemini Vision) parses Form 16/Payslips into structured salary components.
+*   **Computation**: `OldRegimeAgent` and `NewRegimeAgent` compute exact slab-by-slab liability for FY 2025-26.
+*   **Optimization**: `TaxOptimizerAgent` ranks missing deductions (80C, 80D, 80CCD1B) based on liquidity needs and risk profile.
+
+#### 3.3 FIRE Path Planner (9 Agents)
+*   **Ingestion**: `GoalProfiler` + `MacroAgent` (Gemini Search) fetch live inflation and bond yield data.
+*   **Simulation**: `MonteCarloAgent` runs 1,000 iterations using a seeded **Mulberry32 PRNG**.
+*   **Solver**: `SipGlidepathAgent` uses binary search to find the SIP amount required for a 90% success probability.
+*   **Narrative**: `RoadmapBuilder` (Gemini 3.1 Pro Preview) converts numbers into a personalized 20-year prose strategy.
+
+---
+
+### 4. Technical Specifications & Reliability
+
+#### 4.1 Monte Carlo Simulation Engine
+ChanakAI rejects static "average return" models. Our engine samples returns from a normal distribution (12% mean, 18% volatility) and inflation from 6% mean (1.5% volatility), clamped to realistic Indian market floors/ceilings.
 
 <div align="center">
 <img src="diagrams/montecralo-screenshota.png" alt="Monte Carlo Simulation Architecture" width="800" />
 <br/>
-<em>Fig 3: Monte Carlo Fan Chart Architecture — P10/P50/P90 probability bands with ~80ms What-If re-runs.</em>
+<em>Fig 3: Monte Carlo Fan Chart — P10/P50/P90 bands with ~80ms real-time What-If recalculations.</em>
 </div>
 
----
-
-### 5. Enterprise Readiness & Reliability
-
-- **Graceful Degradation**: 3-tier model fallback strategy (Gemini 3.1 Pro → 2.5 Pro → 2.5 Flash → Deterministic Fallback).
-- **Audit Trail**: Every agent's start/complete/error events, latency, and model used are emitted via SSE for a "Show Your Math" UI.
-- **Error Boundaries**: React Error Boundaries per tab ensure a crash in Tax Wizard doesn't affect FIRE Planner.
-- **Deployment**: Multi-stage Docker build deployed to Google Cloud Run (Asia-South1) with 0-3 instance auto-scaling.
+#### 4.2 Enterprise Readiness
+-   **Model Routing**: ChanakAI uses **6 distinct Gemini variants** optimized by task (e.g., Flash for extraction, Pro for optimization, Flash-Image for infographics).
+-   **Telemetry**: Real-time SSE events (`agent_start`, `agent_complete`) provide full visibility into the agentic "black box."
+-   **Infrastructure**: Containerized via multi-stage Docker (Node 22-slim), deployed to **Google Cloud Run** (Asia-South1) with auto-scaling (0-3 instances) for cost-efficiency.
+-   **Compliance**: Automated SEBI disclaimer injection and probabilistic language enforcement via `LoopAgent`.
 
 ---
 
-### 6. Impact Model (Quantified Business Value)
+### 5. Quantified Impact Model
 
 | Metric | Before ChanakAI | After ChanakAI | Impact |
 |---|---|---|---|
-| **Time to Plan** | 2–4 weeks (3 advisor meetings) | < 60 seconds | **99.9% faster** |
+| **Time to Plan** | 2–4 weeks (Advisor meetings) | < 60 seconds | **99.9% faster** |
 | **Cost of Advice** | ₹25,000+ per year | ₹0 | **100% reduction** |
-| **Tax Savings** | Manual guesswork / missing deductions | Slab-by-slab exact optimization | **₹15K–₹40K/year saved** |
-| **Portfolio Alpha** | 0.5–1.5% drag (Overlap/Regular plans) | Automated rebalancing plan | **Continuous monitoring** |
+| **Tax Savings** | Manual guesswork | Slab-by-slab optimization | **₹15K–₹40K/year saved** |
+| **Portfolio Health** | Annual review (if any) | Real-time rebalancing triggers | **Continuous alpha** |
 
-**Assumptions:** Tax savings based on ₹12–₹30L CTC missing 80CCD1B/80D. Displacement cost based on 4 crore smartphone users in ET's base × ₹15K/yr RIA fee.
-
----
-
-### 7. Scenario Walkthrough Summary
-1. **FIRE Plan**: 34yo engineer, ₹24L income. ChanakAI solves for ₹1.5L monthly draw, calculates a ₹9.2Cr corpus target, and finds the ₹42K monthly SIP needed with a 90→60% equity glidepath.
-2. **Tax Optimization**: ₹18L base salary edge case. Identifies Old Regime is only better if 80C + 80D + HRA exceeds ₹4.25L; otherwise, NPS-heavy New Regime wins.
-3. **Portfolio X-Ray**: 6-fund overlap. Quantifies 42% exposure to HDFC Bank across 3 funds; suggests consolidating into 1 direct-plan fund to save ₹12K/year in commissions.
+**Assumptions:** Tax savings based on ₹18L CTC missing standard 80CCD1B/80D. Displacement cost based on 4 crore smartphone users in ET's base × ₹15K/yr RIA fee.
 
 ---
 
-### 8. Conclusion
-ChanakAI demonstrates that high-quality financial planning doesn't require a ₹25,000/year fee. By orchestrating 24 specialized agents with a strict "Math vs. Mind" separation, we have built a system that is autonomous, compliant, and ready for enterprise deployment inside the Economic Times ecosystem.
+### 6. Hackathon Scenario Coverage
+1.  **FIRE Plan**: Solves for 34yo software engineer target. Calculates ₹9.2Cr corpus with 90% confidence and identifies ₹42K monthly SIP requirement.
+2.  **Tax Edge Case**: Side-by-side FY 2025-26 comparison. Identifies optimal regime for ₹18L CTC with HRA/Home Loan components.
+3.  **Portfolio X-Ray**: Stock-level overlap analysis for 6 funds. Identifies 42% HDFC Bank exposure and flags 0.8% expense drag from regular plans.
+
+---
+
+### 7. Conclusion
+ChanakAI is a production-ready, multi-agent financial advisor designed to democratize high-quality financial wisdom. By combining deterministic mathematical rigor with agentic AI reasoning, we provide a secure, compliant, and scalable "Money Mentor" for every Indian.
