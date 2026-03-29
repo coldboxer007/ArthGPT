@@ -185,13 +185,13 @@ function MetricCard({
   positive?: boolean;
 }) {
   return (
-    <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800">
+    <div className="p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a] shadow-sm">
       <p className="text-sm font-medium text-slate-400 mb-2">{label}</p>
       <div className="flex items-baseline gap-2">
         <span className="text-3xl font-bold text-white font-mono">{value}</span>
       </div>
       {subtext && (
-        <p className={`mt-3 text-sm font-medium ${positive ? 'text-emerald-500' : 'text-coral-500'}`}>
+        <p className={`mt-3 text-sm font-medium ${positive ? 'text-teal-400' : 'text-red-400'}`}>
           {subtext}
         </p>
       )}
@@ -209,7 +209,7 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800">
+    <div className="p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a] shadow-sm w-full">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold text-white">{title}</h3>
@@ -223,7 +223,7 @@ function SectionCard({
 
 function MiniTag({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-navy-950/70 border border-navy-800 px-3 py-2">
+    <div className="rounded-xl bg-[#0a0a0a] border border-[#2a2a2a] px-3 py-2">
       <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
       <p className="text-sm text-white font-medium mt-1">{value}</p>
     </div>
@@ -241,44 +241,44 @@ function FanChart({ data, retirementAge }: { data: { age: number; p10: number; p
   if (!data || data.length < 2) return null;
   return (
     <SectionCard title="Monte Carlo Fan Chart" icon={<Info className="w-4 h-4 text-slate-500" />}>
-      <p className="text-xs text-slate-500 mb-4">
-        Corpus projection across 1,000 simulations — P10 (worst), P50 (median), P90 (best). Vertical line = retirement.
+      <p className="text-xs text-slate-400 mb-4">
+        Corpus projection across 1,000 simulations — P10 (worst), P50 (median), P90 (best).
       </p>
       <ResponsiveContainer width="100%" height={320}>
         <AreaChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
           <defs>
             <linearGradient id="fanP90" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity={0.25} />
-              <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+              <stop offset="0%" stopColor="#00e5ff" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="#00e5ff" stopOpacity={0.02} />
             </linearGradient>
             <linearGradient id="fanP50" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#D4AF37" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#D4AF37" stopOpacity={0.05} />
+              <stop offset="0%" stopColor="#2b77d2" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#2b77d2" stopOpacity={0.05} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
           <XAxis
             dataKey="age"
             tick={{ fill: '#64748b', fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: '#334155' }}
+            axisLine={{ stroke: '#333' }}
           />
           <YAxis
             tickFormatter={formatCompactINR}
             tick={{ fill: '#64748b', fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: '#334155' }}
+            axisLine={{ stroke: '#333' }}
             width={60}
           />
           <Tooltip
-            contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
+            contentStyle={{ background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '12px', fontSize: '12px' }}
             labelStyle={{ color: '#94a3b8' }}
             formatter={(val: number, name: string) => [fmtCurrency(val), name]}
             labelFormatter={(age) => `Age ${age}`}
           />
-          <Area type="monotone" dataKey="p90" name="P90 (Upside)" stroke="#10b981" fill="url(#fanP90)" strokeWidth={1.5} dot={false} />
-          <Area type="monotone" dataKey="p50" name="P50 (Median)" stroke="#D4AF37" fill="url(#fanP50)" strokeWidth={2} dot={false} />
-          <Area type="monotone" dataKey="p10" name="P10 (Downside)" stroke="#f87171" fill="none" strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
+          <Area type="monotone" dataKey="p90" name="P90 (Upside)" stroke="#00e5ff" fill="url(#fanP90)" strokeWidth={1.5} dot={false} />
+          <Area type="monotone" dataKey="p50" name="P50 (Median)" stroke="#2b77d2" fill="url(#fanP50)" strokeWidth={2} dot={false} />
+          <Area type="monotone" dataKey="p10" name="P10 (Downside)" stroke="#ef4444" fill="none" strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
           <Legend wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
         </AreaChart>
       </ResponsiveContainer>
@@ -290,33 +290,33 @@ function GlidepathChart({ data }: { data: { age: number; equity: number; debt: n
   if (!data || data.length < 2) return null;
   return (
     <SectionCard title="Asset Glidepath" icon={<Info className="w-4 h-4 text-slate-500" />}>
-      <p className="text-xs text-slate-500 mb-4">
+      <p className="text-xs text-slate-400 mb-4">
         Equity/debt allocation shifts from aggressive to conservative as you approach retirement.
       </p>
       <ResponsiveContainer width="100%" height={260}>
         <AreaChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
           <XAxis
             dataKey="age"
             tick={{ fill: '#64748b', fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: '#334155' }}
+            axisLine={{ stroke: '#333' }}
           />
           <YAxis
             domain={[0, 100]}
             tickFormatter={(v) => `${v}%`}
             tick={{ fill: '#64748b', fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: '#334155' }}
+            axisLine={{ stroke: '#333' }}
             width={45}
           />
           <Tooltip
-            contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
+            contentStyle={{ background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '12px', fontSize: '12px' }}
             labelFormatter={(age) => `Age ${age}`}
             formatter={(val: number, name: string) => [`${val}%`, name]}
           />
-          <Area type="monotone" dataKey="equity" name="Equity" stackId="1" stroke="#D4AF37" fill="#D4AF37" fillOpacity={0.3} strokeWidth={2} />
-          <Area type="monotone" dataKey="debt" name="Debt" stackId="1" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.2} strokeWidth={2} />
+          <Area type="monotone" dataKey="equity" name="Equity" stackId="1" stroke="#00e5ff" fill="#00e5ff" fillOpacity={0.3} strokeWidth={2} />
+          <Area type="monotone" dataKey="debt" name="Debt" stackId="1" stroke="#10d5ff" fill="#10d5ff" fillOpacity={0.1} strokeWidth={2} />
           <Legend wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
         </AreaChart>
       </ResponsiveContainer>
@@ -328,7 +328,6 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
   const { firePipeline: pipeline, getCrossPipelineData } = useAnalysis();
   const infographic = useInfographic();
 
-  // ── Cross-pipeline data for auto-populating FIRE inputs ──
   const autoFilled = useMemo(() => {
     const crossData = getCrossPipelineData();
     return {
@@ -379,15 +378,11 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
 
   useEffect(() => {
     if (fireInput.income <= 0 || pipeline.result || pipeline.isLoading) return;
-
     void pipeline.execute(fireInput);
-    // Removed abort on unmount to allow background processing
   }, [fireInput]);
 
-  // ── Data extraction (safe for null result — normalizeFireResult handles null) ──
   const data = normalizeFireResult(pipeline.result);
 
-  // ── Map client-side FireInput to server-side shape for WhatIfPanel ──
   const fireInputsServer = useMemo(
     () => ({
       currentAge: fireInput.age,
@@ -422,7 +417,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
   if (profile.income <= 0) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <AlertCircle className="w-12 h-12 text-coral-500" />
+        <AlertCircle className="w-12 h-12 text-red-500" />
         <h3 className="text-xl font-semibold text-white">Income data required</h3>
         <p className="text-slate-400 text-center max-w-md">
           We need your income details to model your FIRE roadmap. Please go back and enter your annual income first.
@@ -435,7 +430,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
     const isNetworkError = pipeline.error?.toLowerCase().includes('failed to fetch') || pipeline.error?.toLowerCase().includes('networkerror');
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <AlertCircle className="w-12 h-12 text-coral-500" />
+        <AlertCircle className="w-12 h-12 text-red-500" />
         <h3 className="text-xl font-semibold text-white">FIRE analysis failed</h3>
         <p className="text-slate-400 text-center max-w-md">
           {isNetworkError
@@ -444,7 +439,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
         </p>
         <button
           onClick={() => pipeline.execute(fireInput)}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-navy-950 font-semibold hover:bg-gold-400 transition-colors"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 text-[#0a0a0a] font-semibold hover:bg-teal-400 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Retry Analysis
@@ -468,14 +463,14 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
   if (!pipeline.result) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <AlertCircle className="w-12 h-12 text-coral-500" />
+        <AlertCircle className="w-12 h-12 text-red-500" />
         <h3 className="text-xl font-semibold text-white">No FIRE data returned</h3>
         <p className="text-slate-400 text-center max-w-md">
           The pipeline completed without a result payload. Retry the analysis to rebuild the roadmap.
         </p>
         <button
           onClick={() => pipeline.execute(fireInput)}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-navy-950 font-semibold hover:bg-gold-400 transition-colors"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 text-[#0a0a0a] font-semibold hover:bg-teal-400 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Retry Analysis
@@ -492,24 +487,23 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
         transition={{ duration: 0.2 }}
-        className="space-y-8 max-w-6xl mx-auto"
+        className="flex flex-col gap-6 w-full"
       >
-        <header className="flex items-center justify-between gap-4 flex-wrap">
+        <header className="flex flex-col gap-4">
           <div>
             <h2 className="text-3xl font-bold text-white tracking-tight">FIRE Roadmap</h2>
             <p className="text-slate-400 mt-1">Probability-based retirement planning with Monte Carlo output.</p>
           </div>
-          <div className="px-4 py-2 bg-navy-800 rounded-full border border-navy-700 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="px-4 py-2 bg-[#141414] rounded-full border border-[#2a2a2a] self-start flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
             <span className="text-sm font-medium text-slate-300">V2 Pipeline</span>
           </div>
         </header>
 
-        {/* ── Cross-pipeline enhancement banner ── */}
         {(autoFilled.existingMfCorpus || autoFilled.monthlySipCurrent) && (
-          <div className="bg-teal-500/5 border border-teal-500/20 rounded-xl p-3 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-teal-500/60 shrink-0" />
-            <span className="text-teal-500/60 text-xs">
+          <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-4 flex items-center gap-2 shadow-sm">
+            <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+            <span className="text-teal-200 text-xs font-medium">
               FIRE inputs enhanced with data from{' '}
               {[
                 autoFilled.existingMfCorpus && 'Portfolio X-Ray',
@@ -521,21 +515,20 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
           </div>
         )}
 
-        <div className="p-8 rounded-3xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gold-500 via-teal-500 to-coral-500" />
+        <div className="p-8 rounded-2xl bg-[#141414] border border-teal-500/30 text-center relative overflow-hidden shadow-lg">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00e5ff] to-[#10d5ff]" />
           <h3 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
-            <span className="text-gold-500">{fmtPercent(data.successProbability)}</span> success probability
+            <span className="text-teal-400">{fmtPercent(data.successProbability)}</span> success probability
           </h3>
           <p className="text-lg text-slate-300 max-w-3xl mx-auto">
             {data.roadmapHeadline}
           </p>
           {data.narrative && <p className="text-sm text-slate-400 mt-4 max-w-4xl mx-auto">{data.narrative}</p>}
-          <p className="text-xs text-slate-500 mt-4">
+          <p className="text-xs text-slate-500 mt-6">
             Monte Carlo target corpus: {fmtCurrency(data.targetCorpus)} | Macro snapshot: {data.macroAsOf || 'unavailable'} | Source mode: {data.macroSourceMode}
           </p>
         </div>
 
-        {/* What-If Builder — after hero, before metrics */}
         <WhatIfPanel
           fireInputs={fireInputsServer}
           macroParameters={pipeline.result?.macro_parameters ?? null}
@@ -545,7 +538,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
           baselineMonthlyDraw={fireInput.targetMonthlyDraw}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <MetricCard
             label="Success Probability"
             value={fmtPercent(data.successProbability)}
@@ -556,13 +549,12 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
           <MetricCard label="P90 Upside" value={fmtCurrency(data.p90Corpus)} subtext="Upper-range retirement corpus" />
         </div>
 
-        {/* ── Charts ── */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-6 w-full">
           <FanChart data={data.fanChartData as { age: number; p10: number; p50: number; p90: number }[]} retirementAge={fireInput.retireAge} />
           <GlidepathChart data={data.glidepath} />
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-6 w-full">
           <SectionCard title="SIP Plan" icon={<Info className="w-4 h-4 text-slate-500" />}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
               <MiniTag label="Median SIP" value={fmtCurrency(data.medianSipRequired) + '/mo'} />
@@ -570,7 +562,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
               <div className="relative">
                 <MiniTag label="Current SIP" value={fmtCurrency(fireInput.monthlySipCurrent) + '/mo'} />
                 {autoFilled.monthlySipCurrent && (
-                  <span className="absolute top-1.5 right-2 text-[9px] font-medium text-teal-500/70 bg-teal-500/10 px-1.5 py-0.5 rounded-full">
+                  <span className="absolute top-1.5 right-2 text-[9px] font-medium text-[#00e5ff] bg-[#00e5ff]/10 px-1.5 py-0.5 rounded-full">
                     via Tax Wizard
                   </span>
                 )}
@@ -581,7 +573,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
             <div className="space-y-3">
               {firstYearPlan.length > 0 ? (
                 firstYearPlan.slice(0, 6).map((entry) => (
-                  <div key={entry.month} className="flex items-center justify-between px-4 py-3 rounded-xl bg-navy-950/60 border border-navy-800">
+                  <div key={entry.month} className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#0a0a0a] border border-[#2a2a2a]">
                     <div>
                       <p className="text-sm text-slate-300">Month {entry.month}</p>
                       <p className="text-xs text-slate-500">
@@ -610,13 +602,13 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
             <div className="space-y-3">
               {sources.length > 0 ? (
                 sources.map((source, index) => (
-                  <div key={`${source.label}-${index}`} className="px-4 py-3 rounded-xl bg-navy-950/60 border border-navy-800">
+                  <div key={`${source.label}-${index}`} className="px-4 py-3 rounded-xl bg-[#0a0a0a] border border-[#2a2a2a]">
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="text-sm text-white font-medium">{source.label}</p>
                         <p className="text-xs text-slate-500">{source.url || 'Source metadata provided by backend'}</p>
                       </div>
-                      <p className="text-xs text-gold-500 font-mono">{source.retrievedAt || data.macroAsOf || 'n/a'}</p>
+                      <p className="text-xs text-teal-400 font-mono">{source.retrievedAt || data.macroAsOf || 'n/a'}</p>
                     </div>
                   </div>
                 ))
@@ -627,7 +619,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
           </SectionCard>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-6 w-full">
           <SectionCard title="Probability Interpretation" icon={<Info className="w-4 h-4 text-slate-500" />}>
             <p className="text-slate-300 leading-relaxed">
               {data.probabilityInterpretation || 'The roadmap reflects probabilities derived from a Monte Carlo distribution, not guarantees.'}
@@ -640,8 +632,8 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
             </div>
 
             {data.shortfallAnalysis ? (
-              <div className="mt-6 p-4 rounded-xl bg-coral-500/10 border border-coral-500/20">
-                <p className="text-sm font-medium text-coral-300">Shortfall analysis</p>
+              <div className="mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                <p className="text-sm font-medium text-red-400">Shortfall analysis</p>
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-slate-300">
                   <div>
                     <p className="text-xs text-slate-500">Average shortfall</p>
@@ -669,15 +661,15 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
             <div className="space-y-3 mt-6">
               {timeline.length > 0 ? (
                 timeline.map((item, index) => (
-                  <div key={`${item.title}-${index}`} className="px-4 py-3 rounded-xl bg-navy-950/60 border border-navy-800">
+                  <div key={`${item.title}-${index}`} className="px-4 py-3 rounded-xl bg-[#0a0a0a] border border-[#2a2a2a]">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gold-500/10 text-gold-500 flex items-center justify-center font-mono text-xs shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center font-mono text-xs shrink-0">
                         {index + 1}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm text-white font-medium">{item.title}</p>
-                        <p className="text-xs text-slate-500 mt-1">{item.detail}</p>
-                        {item.milestone && <p className="text-[10px] text-gold-500 mt-2">{item.milestone}</p>}
+                        <p className="text-xs text-slate-400 mt-1">{item.detail}</p>
+                        {item.milestone && <p className="text-[10px] text-teal-500 mt-2">{item.milestone}</p>}
                       </div>
                     </div>
                   </div>
@@ -690,10 +682,10 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
             {actions.length > 0 && (
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {actions.map((action, index) => (
-                    <div key={`${action.title}-${index}`} className="rounded-xl bg-navy-950/60 border border-navy-800 p-4">
+                    <div key={`${action.title}-${index}`} className="rounded-xl bg-[#0a0a0a] border border-[#2a2a2a] p-4">
                       <p className="text-sm text-white font-medium">{action.title}</p>
-                    <p className="text-xs text-slate-500 mt-1">{action.detail || action.impact}</p>
-                    {action.impact && <p className="text-[10px] text-teal-500 mt-2">{action.impact}</p>}
+                    <p className="text-xs text-slate-400 mt-1">{action.detail || action.impact}</p>
+                    {action.impact && <p className="text-[10px] text-teal-400 mt-2">{action.impact}</p>}
                   </div>
                 ))}
               </div>
@@ -701,20 +693,20 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
           </SectionCard>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-6 w-full">
           <SectionCard title="Insurance Gap" icon={<ShieldAlert className="w-4 h-4 text-slate-500" />}>
             <div className="space-y-4">
-              <div className="flex justify-between items-end border-b border-navy-800 pb-2">
+              <div className="flex justify-between items-end border-b border-[#2a2a2a] pb-2">
                 <span className="text-slate-400">Required life cover</span>
                 <span className="text-xl font-mono text-white">{fmtCurrency(data.requiredLifeCover || 0)}</span>
               </div>
-              <div className="flex justify-between items-end border-b border-navy-800 pb-2">
+              <div className="flex justify-between items-end border-b border-[#2a2a2a] pb-2">
                 <span className="text-slate-400">Declared cover</span>
                 <span className="text-xl font-mono text-white">{fmtCurrency(data.declaredLifeCover || 0)}</span>
               </div>
-              <div className="flex justify-between items-end border-b border-navy-800 pb-2">
+              <div className="flex justify-between items-end border-b border-[#2a2a2a] pb-2">
                 <span className="text-slate-400">Life cover gap</span>
-                <span className={`text-xl font-mono ${data.insuranceGap > 0 ? 'text-coral-500' : 'text-emerald-500'}`}>
+                <span className={`text-xl font-mono ${data.insuranceGap > 0 ? 'text-red-400' : 'text-teal-400'}`}>
                   {fmtCurrency(data.insuranceGap)}
                 </span>
               </div>
@@ -731,7 +723,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
                 <div className="relative">
                   <MiniTag label="Target corpus" value={fmtCurrency(data.targetCorpus)} />
                   {autoFilled.existingMfCorpus && (
-                    <span className="absolute top-1.5 right-2 text-[9px] font-medium text-teal-500/70 bg-teal-500/10 px-1.5 py-0.5 rounded-full">
+                    <span className="absolute top-1.5 right-2 text-[9px] font-medium text-[#00e5ff] bg-[#00e5ff]/10 px-1.5 py-0.5 rounded-full">
                       via Portfolio X-Ray
                     </span>
                   )}
@@ -739,7 +731,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
                 <MiniTag label="P10 / P50 / P90" value={`${fmtCurrency(data.p10Corpus)} | ${fmtCurrency(data.p50Corpus)} | ${fmtCurrency(data.p90Corpus)}`} />
                 <MiniTag label="Source mode" value={data.macroSourceMode || 'unknown'} />
               </div>
-              <div className="p-4 rounded-xl bg-navy-950/60 border border-navy-800">
+              <div className="p-4 rounded-xl bg-[#0a0a0a] border border-[#2a2a2a]">
                 <p className="text-sm font-medium text-white">Compliance note</p>
                 <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                   {data.disclaimer}
@@ -749,7 +741,6 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
           </SectionCard>
         </div>
 
-        {/* ── Nano Banana 2 Infographic ── */}
         <InfographicCard
           image={infographic.image}
           isLoading={infographic.isLoading}
@@ -759,13 +750,13 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
           label="FIRE Roadmap Summary"
         />
 
-        <div className="mt-6 p-5 rounded-2xl bg-navy-900/50 border border-navy-800">
+        <div className="mt-6 p-5 rounded-2xl bg-[#141414] border border-[#2a2a2a]">
           <div className="flex items-center gap-2 mb-3">
-            <ShieldAlert className="w-4 h-4 text-gold-500" />
-            <span className="text-xs font-bold uppercase tracking-wider text-gold-500">Mandatory Compliance Disclaimer</span>
+            <ShieldAlert className="w-4 h-4 text-teal-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-400">Mandatory Compliance Disclaimer</span>
           </div>
           <p className="text-[11px] text-slate-500 leading-relaxed">
-            This analysis is generated by ArthaGPT for educational purposes only. Monte Carlo outputs express probability, not certainty. Actual market conditions may differ materially from simulated scenarios. Please consult a qualified financial professional before making investment decisions.
+            This analysis is generated by ChanakAI for educational purposes only. Monte Carlo outputs express probability, not certainty. Actual market conditions may differ materially from simulated scenarios. Please consult a qualified financial professional before making investment decisions.
           </p>
         </div>
       </motion.div>

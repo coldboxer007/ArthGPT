@@ -109,7 +109,7 @@ export async function generateFireRoadmap(params: {
   insuranceGaps: InsuranceGaps;
   scenarioComparisons: FireScenarioComparison[];
 }): Promise<FireRoadmap> {
-  const prompt = `You are ArthaGPT's FIRE roadmap strategist. Write a user-facing retirement roadmap based on probabilistic planning, not guarantees.
+  const prompt = `You are ChanakAI's FIRE roadmap strategist. Write a user-facing retirement roadmap based on probabilistic planning, not guarantees.
 
 USER PROFILE
 - Age: ${params.fireInputs.currentAge}

@@ -419,7 +419,7 @@ export function Onboarding({ step, nextStep, prevStep, profile, setProfile, uplo
               animate={{ letterSpacing: '-0.02em', opacity: 1 }}
               transition={{ duration: 1.2, ease: 'easeOut' }}
             >
-              ArthaGPT
+              ChanakAI
             </motion.h1>
             <motion.p
               className="text-xl md:text-2xl text-slate-400 font-light"

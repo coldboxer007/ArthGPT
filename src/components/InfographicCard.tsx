@@ -23,7 +23,7 @@ export function InfographicCard({ image, isLoading, error, onGenerate, onReset, 
     if (!image) return;
     const link = document.createElement('a');
     link.href = `data:${image.mimeType};base64,${image.imageBase64}`;
-    link.download = `arthagpt-${label.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`;
+    link.download = `chanakai-${label.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`;
     link.click();
   };
 

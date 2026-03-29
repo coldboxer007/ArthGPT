@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.env*
+!.env.example
+*.log
+.DS_Store
+.vite
+coverage
+.opencode
+docs
+conductor
+*.md
+!README.md

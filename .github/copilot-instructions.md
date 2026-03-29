@@ -1,4 +1,4 @@
-# Copilot instructions for ArthaGPT
+# Copilot instructions for ChanakAI
 
 ## Build, lint, and test commands
 - Use Node `22` (`.nvmrc`), then install deps with `npm install`.

@@ -52,7 +52,7 @@ interface OrchestratorResponse {
 - Frontend uses response to auto-navigate to correct tab and pre-fill inputs
 
 **Dashboard changes:**
-1. Add text input at top: "Ask ArthGPT anything about your finances..."
+1. Add text input at top: "Ask ChanakAI anything about your finances..."
 2. On submit, call orchestrator
 3. Auto-switch to correct tab based on intent
 4. Show orchestrator's message as a banner

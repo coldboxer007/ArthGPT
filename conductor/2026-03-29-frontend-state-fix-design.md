@@ -9,7 +9,7 @@ task_complexity: medium
 
 ## 1. Problem Statement
 
-The ArthaGPT application currently suffers from two critical frontend issues impacting the user experience:
+The ChanakAI application currently suffers from two critical frontend issues impacting the user experience:
 1. The `FIRERoadmap` component is stuck in an infinite loading loop. This is caused by a React `useEffect` dependency bug where the `useFirePipeline` hook continuously recreates its return object, triggering repeated analysis executions. — *[Rationale: We must fix the infinite execution cycle to stop unnecessary API calls and unblock the feature]*
 2. The analysis state for all pipeline tabs (Portfolio X-Ray, FIRE Roadmap, Tax Wizard) is lost when a user switches between tabs. This occurs because the components unmount and destroy their local state initialized by the `useSSE` hooks. — *[Rationale: Users need to reference calculations across different tabs without waiting for 8-second re-runs]*
 

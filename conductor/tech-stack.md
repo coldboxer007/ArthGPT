@@ -1,4 +1,4 @@
-# ArthaGPT Tech Stack
+# ChanakAI Tech Stack
 
 ## Frontend
 - React 19

@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
@@ -491,7 +491,7 @@ async function startServer() {
    *
    * Accepts FIRE simulation override parameters and returns Monte Carlo results.
    * Synchronous JSON endpoint (not SSE) — designed for fast what-if feedback
-   * from slider interactions (~50ms for 300 iterations).
+   * from slider interactions (~80ms for 500 iterations).
    *
    * Request Body: { fireInputs, macroParameters, monthlySipOverride?, retirementAgeOverride?, targetMonthlyDrawOverride?, equityAllocationOverride? }
    * Response: MonteCarloResults JSON
@@ -519,7 +519,7 @@ async function startServer() {
         retirementAgeOverride,
         targetMonthlyDrawOverride,
         equityAllocationOverride,
-        iterations: 300,
+        iterations: 500,
       });
 
       res.json(results);
@@ -627,11 +627,11 @@ async function startServer() {
    */
   app.post('/api/v2/orchestrate', async (req, res) => {
     try {
-      const { message } = req.body;
+      const { message, profile, crossPipelineData, documents, chatHistory } = req.body;
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ error: 'message (string) is required' });
       }
-      const result = await orchestrate(message);
+      const result = await orchestrate(message, { profile, crossPipelineData, documents, chatHistory });
       res.json(result);
     } catch (err) {
       res.status(500).json({ error: 'Orchestration failed', detail: String(err) });

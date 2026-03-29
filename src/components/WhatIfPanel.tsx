@@ -34,11 +34,161 @@ function formatINR(value: number): string {
   }).format(value);
 }
 
-function formatCompactINR(value: number): string {
-  if (value >= 1e7) return `\u20B9${(value / 1e7).toFixed(1)}Cr`;
-  if (value >= 1e5) return `\u20B9${(value / 1e5).toFixed(1)}L`;
-  if (value >= 1e3) return `\u20B9${(value / 1e3).toFixed(0)}K`;
-  return `\u20B9${value.toFixed(0)}`;
+function formatIndianCurrency(amount: number): string {
+  if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(1)} Cr`;
+  if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)} L`;
+  return `₹${amount.toLocaleString('en-IN')}`;
+}
+
+/** Returns risk tier metadata for a given success probability (0-100 scale). */
+function getRiskTier(pct: number) {
+  if (pct < 50) return { label: 'High Risk', color: '#FF6B6B', tailwindText: 'text-coral-500', tailwindBg: 'bg-coral-500' };
+  if (pct < 70) return { label: 'Moderate Risk', color: '#F59E0B', tailwindText: 'text-orange-400', tailwindBg: 'bg-orange-400' };
+  if (pct < 85) return { label: 'Moderate', color: '#FBBF24', tailwindText: 'text-yellow-400', tailwindBg: 'bg-yellow-400' };
+  return { label: 'On Track', color: '#34D399', tailwindText: 'text-emerald-400', tailwindBg: 'bg-emerald-400' };
+}
+
+/** Semi-circular gauge rendered with SVG. Animated via a clip-path trick + CSS transition. */
+function ProbabilityGauge({ percentage, isLoading }: { percentage: number; isLoading: boolean }) {
+  const tier = getRiskTier(percentage);
+  const clampedPct = Math.min(100, Math.max(0, percentage));
+
+  // SVG arc parameters
+  const size = 180;
+  const strokeWidth = 14;
+  const radius = (size - strokeWidth) / 2;
+  const cx = size / 2;
+  const cy = size / 2 + 10; // shift down slightly so the semi-circle sits well
+
+  // Arc goes from 180° (left) to 0° (right) — a semi-circle
+  const startAngle = Math.PI; // 180°
+  const endAngle = 0; // 0°
+  const sweepAngle = startAngle - endAngle; // π radians total
+
+  // The filled portion angle
+  const fillAngle = startAngle - (clampedPct / 100) * sweepAngle;
+
+  // Background arc (full semi-circle)
+  const bgX1 = cx + radius * Math.cos(startAngle);
+  const bgY1 = cy - radius * Math.sin(startAngle);
+  const bgX2 = cx + radius * Math.cos(endAngle);
+  const bgY2 = cy - radius * Math.sin(endAngle);
+  const bgPath = `M ${bgX1} ${bgY1} A ${radius} ${radius} 0 1 1 ${bgX2} ${bgY2}`;
+
+  // Needle tip position
+  const needleX = cx + (radius - 2) * Math.cos(fillAngle);
+  const needleY = cy - (radius - 2) * Math.sin(fillAngle);
+
+  // Animated stroke offset approach — we use stroke-dasharray/dashoffset for smooth transitions
+  const circumference = Math.PI * radius; // semi-circle length
+  const filledLength = (clampedPct / 100) * circumference;
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative" style={{ width: size, height: size / 2 + 30 }}>
+        <svg
+          width={size}
+          height={size / 2 + 30}
+          viewBox={`0 0 ${size} ${size / 2 + 30}`}
+          className="overflow-visible"
+        >
+          {/* Gradient definition */}
+          <defs>
+            <linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#FF6B6B" />
+              <stop offset="40%" stopColor="#F59E0B" />
+              <stop offset="65%" stopColor="#FBBF24" />
+              <stop offset="85%" stopColor="#34D399" />
+            </linearGradient>
+          </defs>
+
+          {/* Background track */}
+          <path
+            d={bgPath}
+            fill="none"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+          />
+
+          {/* Filled arc using dash-offset animation */}
+          <path
+            d={bgPath}
+            fill="none"
+            stroke="url(#gauge-gradient)"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference - filledLength}
+            style={{ transition: 'stroke-dashoffset 0.6s ease-out' }}
+          />
+
+          {/* Needle dot */}
+          <circle
+            cx={needleX}
+            cy={needleY}
+            r={5}
+            fill={tier.color}
+            style={{
+              transition: 'cx 0.6s ease-out, cy 0.6s ease-out',
+              filter: `drop-shadow(0 0 4px ${tier.color}80)`,
+            }}
+          />
+        </svg>
+
+        {/* Center text overlay */}
+        <div
+          className="absolute inset-x-0 flex flex-col items-center"
+          style={{ bottom: 0 }}
+        >
+          <div className="flex items-center gap-1.5">
+            <span
+              className="text-3xl font-bold font-mono tabular-nums"
+              style={{ color: tier.color, transition: 'color 0.4s ease' }}
+            >
+              {clampedPct.toFixed(1)}%
+            </span>
+            {isLoading && (
+              <Loader2 className="w-4 h-4 text-gold-500 animate-spin" />
+            )}
+          </div>
+          <span
+            className="text-xs font-medium tracking-wide uppercase mt-0.5"
+            style={{ color: tier.color, transition: 'color 0.4s ease', opacity: 0.85 }}
+          >
+            {tier.label}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Delta badge showing change from baseline */
+function DeltaBadge({
+  current,
+  baseline,
+  format,
+}: {
+  current: number;
+  baseline: number;
+  format: (delta: number) => string;
+}) {
+  const delta = current - baseline;
+  if (delta === 0) return null;
+
+  const isPositive = delta > 0;
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 text-xs font-mono px-1.5 py-0.5 rounded-md ${
+        isPositive
+          ? 'text-emerald-400 bg-emerald-400/10'
+          : 'text-coral-500 bg-coral-500/10'
+      }`}
+    >
+      {isPositive ? '▲' : '▼'} {format(delta)}
+    </span>
+  );
 }
 
 export function WhatIfPanel({
@@ -127,20 +277,8 @@ export function WhatIfPanel({
 
   const deltaPP = whatIfPct != null ? whatIfPct - baselinePct : null;
 
-  // Color-code the probability
+  // Display probability (what-if result takes precedence over baseline)
   const displayPct = whatIfPct ?? baselinePct;
-  const probColor =
-    displayPct < 50
-      ? 'text-coral-500'
-      : displayPct < 75
-        ? 'text-yellow-400'
-        : 'text-emerald-400';
-  const barColor =
-    displayPct < 50
-      ? 'bg-coral-500'
-      : displayPct < 75
-        ? 'bg-yellow-400'
-        : 'bg-emerald-400';
 
   const percentiles = result?.retirementCorpusPercentiles;
   const hasOverrides = Object.values(overrides).some((v) => v !== undefined);
@@ -188,12 +326,11 @@ export function WhatIfPanel({
                 </div>
               )}
 
-              {/* Sliders */}
+              {/* Sliders with delta indicators */}
               <div className="space-y-5">
                 {sliders.map((slider) => {
                   const current =
                     (overrides[slider.key] as number | undefined) ?? slider.baseline;
-                  const delta = current - slider.baseline;
 
                   return (
                     <div key={slider.key} className="space-y-2">
@@ -205,15 +342,11 @@ export function WhatIfPanel({
                           <span className="text-sm font-mono text-white">
                             {slider.format(current)}
                           </span>
-                          {delta !== 0 && (
-                            <span
-                              className={`text-xs font-mono ${
-                                delta > 0 ? 'text-emerald-400' : 'text-coral-500'
-                              }`}
-                            >
-                              ({slider.deltaFormat(delta)})
-                            </span>
-                          )}
+                          <DeltaBadge
+                            current={current}
+                            baseline={slider.baseline}
+                            format={slider.deltaFormat}
+                          />
                         </div>
                       </div>
                       <input
@@ -233,63 +366,58 @@ export function WhatIfPanel({
               </div>
 
               {/* Results display */}
-              <div className="rounded-2xl bg-navy-800 border border-navy-700 p-5 space-y-4">
-                {/* Success probability */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-slate-400">Success Probability:</span>
-                    <span className={`text-2xl font-bold font-mono ${probColor}`}>
-                      {displayPct.toFixed(1)}%
-                    </span>
-                    {isLoading && (
-                      <Loader2 className="w-4 h-4 text-gold-500 animate-spin" />
-                    )}
-                  </div>
-                  {deltaPP != null && (
+              <div className="rounded-2xl bg-navy-800 border border-navy-700 p-5 space-y-5">
+                {/* --- Probability Gauge --- */}
+                <ProbabilityGauge percentage={displayPct} isLoading={isLoading} />
+
+                {/* --- Delta from baseline --- */}
+                {deltaPP != null && deltaPP !== 0 && (
+                  <div className="flex justify-center">
                     <span
-                      className={`text-sm font-mono ${
-                        deltaPP >= 0 ? 'text-emerald-400' : 'text-coral-500'
+                      className={`inline-flex items-center gap-1.5 text-sm font-mono px-3 py-1 rounded-full ${
+                        deltaPP >= 0
+                          ? 'text-emerald-400 bg-emerald-400/10'
+                          : 'text-coral-500 bg-coral-500/10'
                       }`}
                     >
-                      {deltaPP >= 0 ? '\u2191' : '\u2193'}{' '}
+                      {deltaPP >= 0 ? '▲' : '▼'}{' '}
                       {deltaPP >= 0 ? '+' : ''}
-                      {deltaPP.toFixed(1)}pp from base
+                      {deltaPP.toFixed(1)}pp from baseline
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {/* Progress bar */}
-                <div className="w-full h-3 rounded-full bg-navy-950 overflow-hidden">
-                  <motion.div
-                    className={`h-full rounded-full ${barColor}`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min(100, Math.max(0, displayPct))}%` }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                  />
-                </div>
-
-                {/* Percentiles */}
+                {/* --- Corpus Preview (P50 prominent) --- */}
                 {percentiles && (
-                  <div className="flex items-center gap-4 text-sm">
-                    <div>
-                      <span className="text-slate-500">P10: </span>
-                      <span className="font-mono text-white">
-                        {formatCompactINR(percentiles.p10)}
+                  <div className="rounded-xl bg-navy-900/60 border border-navy-700/50 p-4">
+                    {/* P50 hero number */}
+                    <div className="flex flex-col items-center mb-3">
+                      <span className="text-xs text-slate-500 uppercase tracking-wider mb-1">
+                        Projected Corpus at Retirement
+                      </span>
+                      <span className="text-2xl font-bold font-mono text-gold-500">
+                        {formatIndianCurrency(percentiles.p50)}
+                      </span>
+                      <span className="text-xs text-slate-500 mt-0.5">
+                        median (P50) estimate
                       </span>
                     </div>
-                    <span className="text-navy-700">|</span>
-                    <div>
-                      <span className="text-slate-500">P50: </span>
-                      <span className="font-mono text-white">
-                        {formatCompactINR(percentiles.p50)}
-                      </span>
-                    </div>
-                    <span className="text-navy-700">|</span>
-                    <div>
-                      <span className="text-slate-500">P90: </span>
-                      <span className="font-mono text-white">
-                        {formatCompactINR(percentiles.p90)}
-                      </span>
+
+                    {/* P10 / P90 range */}
+                    <div className="flex items-center justify-center gap-6 text-sm">
+                      <div className="text-center">
+                        <span className="text-slate-500 text-xs block">Pessimistic</span>
+                        <span className="font-mono text-slate-300">
+                          {formatIndianCurrency(percentiles.p10)}
+                        </span>
+                      </div>
+                      <div className="w-px h-6 bg-navy-700" />
+                      <div className="text-center">
+                        <span className="text-slate-500 text-xs block">Optimistic</span>
+                        <span className="font-mono text-slate-300">
+                          {formatIndianCurrency(percentiles.p90)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}

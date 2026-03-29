@@ -9,7 +9,6 @@ import { AgentExecutionLog } from './AgentExecutionLog';
 import { useInfographic } from '../hooks/useInfographic';
 import { InfographicCard } from './InfographicCard';
 
-// Types for the pipeline result
 interface PortfolioResult {
   portfolio_data?: {
     totalValue: number;
@@ -73,9 +72,7 @@ interface PortfolioResult {
   }>;
 }
 
-// ── Tax-Aware Helpers ──
-const EQUITY_LTCG_RATE = 0.125; // 12.5% flat for equity held >1yr (Budget 2024)
-// Debt funds post-2023: taxed at slab rate (marginalRate), not 20% with indexation
+const EQUITY_LTCG_RATE = 0.125;
 
 function isEquityFund(fundName: string): boolean {
   const lower = fundName.toLowerCase();
@@ -93,7 +90,7 @@ function computePostTaxReturn(fundXirr: number, fundName: string, taxBracket: nu
 export function PortfolioXRay({ profile }: { profile: UserProfile }) {
   const [showExecutionLog, setShowExecutionLog] = useState(false);
   const { portfolioPipeline, getCrossPipelineData } = useAnalysis();
-  const { execute, events, result, error, isLoading, isComplete, isError, abort } = portfolioPipeline;
+  const { execute, events, result, error, isLoading, isComplete, isError } = portfolioPipeline;
   const infographic = useInfographic();
 
   const buildFundInput = useCallback(() => {
@@ -122,7 +119,6 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
   }, [profile]);
 
   useEffect(() => {
-    // Don't re-execute if we already have results or are currently loading
     if (result || isLoading) return;
     const input = buildFundInput();
     execute(input);
@@ -130,7 +126,6 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
 
-  // ── Data extraction (safe for null result — defaults used) ──
   const data = (result as PortfolioResult) ?? ({} as PortfolioResult);
   const xirr = data.xirr_results?.portfolioXirr || 0;
   const benchmarkReturn = data.benchmark_comparison?.funds?.[0]?.benchmark3Y || 12;
@@ -141,7 +136,6 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
   const fundCount = data.portfolio_data?.funds?.length || 4;
   const fundXirrs = data.xirr_results?.fundXirrs ?? [];
 
-  // ── Cross-pipeline tax data ──
   const crossData = getCrossPipelineData();
   const taxBracket = crossData.taxBracket;
   const hasTaxData = taxBracket !== undefined;
@@ -157,14 +151,12 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
     });
   }, [infographic, xirr, benchmarkReturn, expenseDrag, overlappingStocks, totalValue, fundCount]);
 
-  // Build expense chart data
   const expenseChartData = data.expense_analysis?.fundExpenses?.map(f => ({
     name: f.fund.split(' ').slice(0, 2).join(' '),
     regular: f.regularER ?? 0,
     direct: f.directER ?? 0,
   })) ?? [];
 
-  // Build overlap display data
   const overlapDisplayData = data.overlap_data?.overlapMatrix?.slice(0, 5).map(o => ({
     stock: o.stock ?? '—',
     funds: Array.isArray(o.funds) ? o.funds.map(f => (f ?? '').split(' ')[0]) : [],
@@ -172,31 +164,29 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
     confidence: o.confidence ?? 'MEDIUM',
   })) ?? [];
 
-  // Show loading state with real agent events
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-6">
-        <Loader2 className="w-8 h-8 text-gold-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-teal-400 animate-spin" />
         <p className="text-slate-400 text-sm">Executing Portfolio X-Ray pipeline...</p>
         
-        {/* Live agent status */}
         <div className="w-full max-w-md space-y-2">
           {['IngestionAgent', 'XirrEngine', 'OverlapAgent', 'ExpenseAgent', 'BenchmarkAgent', 'RebalancingStrategist'].map(agent => {
             const startEvent = events.find(e => e.agent === agent && e.type === 'agent_start');
             const completeEvent = events.find(e => e.agent === agent && e.type === 'agent_complete');
             
             return (
-              <div key={agent} className="flex items-center justify-between px-4 py-2 bg-navy-900 rounded-lg border border-navy-800">
+              <div key={agent} className="flex items-center justify-between px-4 py-2 bg-[#141414] rounded-xl border border-[#2a2a2a] shadow-sm">
                 <span className="text-sm text-slate-300">{agent}</span>
                 {completeEvent ? (
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-teal-400" />
                     <span className="text-xs text-slate-500">{completeEvent.latencyMs}ms</span>
                   </div>
                 ) : startEvent ? (
-                  <Loader2 className="w-4 h-4 text-gold-500 animate-spin" />
+                  <Loader2 className="w-4 h-4 text-teal-400 animate-spin" />
                 ) : (
-                  <div className="w-4 h-4 rounded-full bg-navy-700" />
+                  <div className="w-4 h-4 rounded-full bg-[#2a2a2a]" />
                 )}
               </div>
             );
@@ -210,7 +200,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
     const isNetworkError = error?.toLowerCase().includes('failed to fetch') || error?.toLowerCase().includes('networkerror');
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <WifiOff className="w-12 h-12 text-coral-500" />
+        <WifiOff className="w-12 h-12 text-red-500" />
         <h3 className="text-xl font-semibold text-white">Analysis Failed</h3>
         <p className="text-slate-400 text-center max-w-md">
           {isNetworkError
@@ -219,7 +209,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
         </p>
         <button
           onClick={() => execute(buildFundInput())}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-navy-950 font-semibold hover:bg-gold-400 transition-colors"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 text-[#0a0a0a] font-semibold hover:bg-teal-400 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Retry Analysis
@@ -231,14 +221,14 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
   if (isComplete && !result) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <AlertTriangle className="w-12 h-12 text-coral-500" />
+        <AlertTriangle className="w-12 h-12 text-red-500" />
         <h3 className="text-xl font-semibold text-white">No Portfolio Data Returned</h3>
         <p className="text-slate-400 text-center max-w-md">
           The pipeline completed but did not return a result payload. This can happen due to a slow network or timeout. Please retry.
         </p>
         <button
           onClick={() => execute(buildFundInput())}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-navy-950 font-semibold hover:bg-gold-400 transition-colors"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 text-[#0a0a0a] font-semibold hover:bg-teal-400 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Retry Analysis
@@ -250,23 +240,22 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
   if (!isComplete || !result) return null;
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      <header className="flex items-center justify-between">
+    <div className="space-y-8 max-w-5xl mx-auto w-full">
+      <header className="flex flex-col gap-4">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Portfolio X-Ray</h2>
           <p className="text-slate-400 mt-1">Multi-agent analysis of your mutual fund holdings.</p>
         </div>
         <div className="flex items-center gap-3">
           <ConfidenceBadge level={overlapConfidence} />
-          <div className="px-4 py-2 bg-navy-800 rounded-full border border-navy-700 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="px-4 py-2 bg-[#141414] rounded-full border border-[#2a2a2a] flex items-center gap-2 self-start">
+            <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
             <span className="text-sm font-medium text-slate-300">V2 Pipeline</span>
           </div>
         </div>
       </header>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {[
           { label: 'True XIRR', value: `${xirr.toFixed(1)}%`, trend: `+${(xirr - benchmarkReturn).toFixed(1)}% vs BM`, positive: xirr > benchmarkReturn },
           { label: 'Benchmark Return', value: `${benchmarkReturn.toFixed(1)}%`, trend: 'Nifty 500 TRI', positive: true },
@@ -278,7 +267,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="p-6 rounded-2xl bg-navy-900 border border-navy-800 hover:border-navy-700 transition-colors"
+            className="p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a] shadow-sm hover:border-[#333] transition-colors"
           >
             <p className="text-sm font-medium text-slate-400 mb-2">{metric.label}</p>
             <div className="flex items-baseline gap-2">
@@ -286,11 +275,11 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
             </div>
             <div className="mt-4 flex items-center gap-1.5">
               {metric.positive ? (
-                <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+                <ArrowUpRight className="w-4 h-4 text-teal-400" />
               ) : (
-                <ArrowDownRight className="w-4 h-4 text-coral-500" />
+                <ArrowDownRight className="w-4 h-4 text-red-400" />
               )}
-              <span className={`text-sm font-medium ${metric.positive ? 'text-emerald-500' : 'text-coral-500'}`}>
+              <span className={`text-sm font-medium ${metric.positive ? 'text-teal-400' : 'text-red-400'}`}>
                 {metric.trend}
               </span>
             </div>
@@ -298,7 +287,6 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
         ))}
       </div>
 
-      {/* ── Fund Returns (Post-Tax View) ── */}
       {fundXirrs.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -311,15 +299,15 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
           </div>
 
           {!hasTaxData && (
-            <div className="bg-gold-500/5 border border-gold-500/20 rounded-xl p-3 flex items-center gap-2">
-              <Info className="w-4 h-4 text-gold-500/60 shrink-0" />
-              <span className="text-gold-500/60 text-xs">
+            <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-3 flex items-center gap-2 shadow-sm">
+              <Info className="w-4 h-4 text-teal-400 shrink-0" />
+              <span className="text-teal-200 text-xs">
                 Run Tax Wizard to see post-tax returns
               </span>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="flex flex-col gap-3 w-full">
             {fundXirrs.map((f, i) => {
               const postTax = hasTaxData ? computePostTaxReturn(f.xirr, f.fund, taxBracket!) : null;
               const isPositive = f.xirr >= 0;
@@ -329,20 +317,22 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="p-4 rounded-xl bg-navy-900 border border-navy-800 hover:border-navy-700 transition-colors"
+                  className="p-5 rounded-xl bg-[#141414] border border-[#2a2a2a] shadow-sm hover:border-[#333] transition-colors"
                 >
-                  <p className="text-sm text-slate-400 mb-2 truncate" title={f.fund}>{f.fund}</p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-xl font-bold font-mono ${isPositive ? 'text-emerald-400' : 'text-coral-400'}`}>
-                      {f.xirr.toFixed(1)}%
-                    </span>
-                    <span className="text-xs text-slate-500">XIRR</span>
+                  <p className="text-sm text-slate-300 mb-2 truncate font-medium" title={f.fund}>{f.fund}</p>
+                  <div className="flex items-center justify-between flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xl font-bold font-mono ${isPositive ? 'text-teal-400' : 'text-red-400'}`}>
+                        {f.xirr.toFixed(1)}%
+                      </span>
+                      <span className="text-xs text-slate-500">XIRR</span>
+                    </div>
                     {postTax !== null && (
                       <span
-                        className={`ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                           postTax >= 0
-                            ? 'bg-teal-500/10 text-teal-500'
-                            : 'bg-coral-500/10 text-coral-500'
+                            ? 'bg-teal-500/10 text-teal-400'
+                            : 'bg-red-500/10 text-red-400'
                         }`}
                       >
                         Post-tax: {postTax.toFixed(1)}%
@@ -350,7 +340,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
                     )}
                   </div>
                   {postTax !== null && (
-                    <p className="text-xs text-slate-500 mt-1.5">
+                    <p className="text-xs text-slate-500 mt-2 text-right">
                       {isEquityFund(f.fund) ? 'Equity LTCG 12.5%' : `Debt at slab ${taxBracket}%`}
                     </p>
                   )}
@@ -361,9 +351,8 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Overlap Map with Confidence */}
-        <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800 flex flex-col">
+      <div className="flex flex-col gap-6 w-full">
+        <div className="p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a] shadow-sm flex flex-col w-full">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold text-white">Stock Overlap Heatmap</h3>
@@ -372,9 +361,9 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
             <Info className="w-4 h-4 text-slate-500" />
           </div>
           
-          <div className="flex-1 overflow-x-auto">
+          <div className="flex-1 overflow-x-auto w-full">
             <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-400 uppercase bg-navy-950/50">
+              <thead className="text-xs text-slate-400 uppercase bg-[#0a0a0a]">
                 <tr>
                   <th className="px-4 py-3 rounded-tl-lg">Stock</th>
                   <th className="px-4 py-3">Funds</th>
@@ -384,83 +373,81 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
               </thead>
               <tbody>
                 {overlapDisplayData.map((row, i) => (
-                  <tr key={i} className="border-b border-navy-800/50 last:border-0">
-                    <td className="px-4 py-3 font-medium text-slate-200">{row.stock}</td>
-                    <td className="px-4 py-3 text-slate-400">{row.funds.join(', ')}</td>
-                    <td className="px-4 py-3 text-teal-400 font-mono">{row.percentage.toFixed(1)}%</td>
-                    <td className="px-4 py-3"><ConfidenceDot level={row.confidence} /></td>
+                  <tr key={i} className="border-b border-[#2a2a2a] last:border-0 hover:bg-[#1a1a1a]">
+                    <td className="px-4 py-4 font-medium text-slate-200">{row.stock}</td>
+                    <td className="px-4 py-4 text-slate-400">{row.funds.join(', ')}</td>
+                    <td className="px-4 py-4 text-teal-400 font-mono">{row.percentage.toFixed(1)}%</td>
+                    <td className="px-4 py-4"><ConfidenceDot level={row.confidence} /></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           {overlapDisplayData[0] && (
-            <p className="mt-4 text-sm text-slate-400 bg-navy-950/50 p-3 rounded-lg border border-navy-800">
+            <p className="mt-6 text-sm text-slate-400 bg-[#0a0a0a] p-4 rounded-xl border border-[#2a2a2a]">
               <strong className="text-white">{overlapDisplayData[0].stock}</strong> makes up {overlapDisplayData[0].percentage.toFixed(1)}% of your effective portfolio — appearing in {overlapDisplayData[0].funds.length} of your funds.
             </p>
           )}
         </div>
 
-        {/* Expense Ratio Comparison */}
-        <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800 flex flex-col">
+        <div className="p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a] shadow-sm flex flex-col w-full">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-white">Expense Ratio Drag</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-coral-500" /> Regular Plan</div>
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-teal-500" /> Direct Plan</div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#ef4444]" /> Regular Plan</div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#00e5ff]" /> Direct Plan</div>
             </div>
           </div>
           
-          <div className="flex-1 h-64">
+          <div className="flex-1 h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={expenseChartData} layout="vertical" margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
                 <XAxis type="number" hide />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} width={80} />
                 <Tooltip 
-                  cursor={{ fill: '#1e293b', opacity: 0.4 }}
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px', color: '#f8fafc' }}
+                  cursor={{ fill: '#2a2a2a', opacity: 0.4 }}
+                  contentStyle={{ backgroundColor: '#0a0a0a', borderColor: '#2a2a2a', borderRadius: '8px', color: '#f8fafc' }}
                   itemStyle={{ color: '#f8fafc' }}
                   formatter={(value: number) => `${value.toFixed(2)}%`}
                 />
-                <Bar dataKey="regular" fill="#FF6B6B" radius={[0, 4, 4, 0]} barSize={24} name="Regular" />
-                <Bar dataKey="direct" fill="#20B2AA" radius={[0, 4, 4, 0]} barSize={24} name="Direct" />
+                <Bar dataKey="regular" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={24} name="Regular" />
+                <Bar dataKey="direct" fill="#00e5ff" radius={[0, 4, 4, 0]} barSize={24} name="Direct" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Rebalancing Plan */}
       {data.rebalancing_plan?.recommendations && data.rebalancing_plan.recommendations.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
           <h3 className="text-xl font-semibold text-white">Actionable Rebalancing Plan</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4 w-full">
             {data.rebalancing_plan.recommendations.map((plan, i) => (
-              <div key={i} className="contents">
+              <div key={i} className="flex flex-col gap-4 w-full">
                 <motion.div 
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="p-5 rounded-xl bg-navy-900 border border-coral-500/30 relative overflow-hidden group"
+                  className="p-6 rounded-2xl bg-[#141414] border border-red-500/30 relative overflow-hidden group shadow-sm"
                 >
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <AlertTriangle className="w-24 h-24 text-coral-500" />
+                    <AlertTriangle className="w-24 h-24 text-red-500" />
                   </div>
                   <div className="relative z-10">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-coral-500/10 text-coral-500 text-xs font-bold uppercase tracking-wider mb-3">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-bold uppercase tracking-wider mb-4">
                       Redeem
                     </div>
-                    <h4 className="text-lg font-semibold text-white mb-1">{plan.fundToRedeem}</h4>
-                    <p className="text-sm text-slate-400 mb-4">{plan.units} units • Current Value: {formatCurrency(plan.currentValue)}</p>
+                    <h4 className="text-lg font-semibold text-white mb-2">{plan.fundToRedeem}</h4>
+                    <p className="text-sm text-slate-400 mb-6">{plan.units} units • Current Value: {formatCurrency(plan.currentValue)}</p>
                     
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between border-b border-navy-800 pb-2">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between border-b border-[#2a2a2a] pb-3">
                         <span className="text-slate-500">Holding Period</span>
                         <span className="text-slate-300 font-medium">{plan.holdingPeriod}</span>
                       </div>
-                      <div className="flex justify-between border-b border-navy-800 pb-2">
+                      <div className="flex justify-between border-b border-[#2a2a2a] pb-3">
                         <span className="text-slate-500">Tax Implication</span>
-                        <span className={`font-medium ${plan.taxImplication === 'No Tax' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                        <span className={`font-medium ${plan.taxImplication === 'No Tax' ? 'text-teal-400' : 'text-amber-500'}`}>
                           {plan.taxImplication} ({formatCurrency(plan.estimatedTax)})
                         </span>
                       </div>
@@ -472,26 +459,26 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 + 0.05 }}
-                  className="p-5 rounded-xl bg-navy-900 border border-teal-500/30 relative overflow-hidden group"
+                  className="p-6 rounded-2xl bg-[#141414] border border-teal-500/30 relative overflow-hidden group shadow-sm"
                 >
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                     <CheckCircle2 className="w-24 h-24 text-teal-500" />
                   </div>
                   <div className="relative z-10">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-500 text-xs font-bold uppercase tracking-wider mb-3">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 text-xs font-bold uppercase tracking-wider mb-4">
                       Invest
                     </div>
-                    <h4 className="text-lg font-semibold text-white mb-1">{plan.fundToInvest}</h4>
-                    <p className="text-sm text-slate-400 mb-4">Invest proceeds: {formatCurrency(plan.currentValue)}</p>
+                    <h4 className="text-lg font-semibold text-white mb-2">{plan.fundToInvest}</h4>
+                    <p className="text-sm text-slate-400 mb-6">Invest proceeds: {formatCurrency(plan.currentValue)}</p>
                     
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between border-b border-navy-800 pb-2">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between border-b border-[#2a2a2a] pb-3">
                         <span className="text-slate-500">Why this fund?</span>
-                        <span className="text-slate-300 font-medium text-right max-w-[200px]">{plan.reason}</span>
+                        <span className="text-slate-300 font-medium text-right max-w-[250px]">{plan.reason}</span>
                       </div>
-                      <div className="flex justify-between border-b border-navy-800 pb-2">
+                      <div className="flex justify-between border-b border-[#2a2a2a] pb-3">
                         <span className="text-slate-500">Expense Benefit</span>
-                        <span className="text-emerald-500 font-medium">{plan.expenseBenefit}</span>
+                        <span className="text-teal-400 font-medium">{plan.expenseBenefit}</span>
                       </div>
                     </div>
                   </div>
@@ -502,25 +489,26 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
         </div>
       )}
 
-      {/* AI Insight */}
       {data.rebalancing_plan?.narrative && (
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-navy-900 to-navy-950 border border-gold-500/20">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-gold-500/10 flex items-center justify-center">
-              <span className="text-gold-500 font-bold">AI</span>
+        <div className="p-8 rounded-3xl bg-[#0a0a0a] border border-[#00e5ff]/20 shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#00e5ff]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+                <span className="text-teal-400 font-bold text-sm tracking-wide">AI</span>
+              </div>
+              <h3 className="text-xl font-semibold text-teal-400 tracking-wide">ChanakAI Insight</h3>
             </div>
-            <h3 className="text-lg font-semibold text-gold-500">ArthaGPT Insight</h3>
+            <div className="space-y-4 text-slate-300 leading-relaxed text-sm">
+              <p>{data.rebalancing_plan.narrative}</p>
+            </div>
+            {data.rebalancing_plan.disclaimer && (
+              <p className="mt-6 text-xs text-slate-500 italic border-t border-[#2a2a2a] pt-4">{data.rebalancing_plan.disclaimer}</p>
+            )}
           </div>
-          <div className="space-y-4 text-slate-300 leading-relaxed text-sm">
-            <p>{data.rebalancing_plan.narrative}</p>
-          </div>
-          {data.rebalancing_plan.disclaimer && (
-            <p className="mt-4 text-xs text-slate-500 italic">{data.rebalancing_plan.disclaimer}</p>
-          )}
         </div>
       )}
 
-      {/* ── Nano Banana 2 Infographic ── */}
       <InfographicCard
         image={infographic.image}
         isLoading={infographic.isLoading}
@@ -530,21 +518,20 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
         label="Portfolio X-Ray Summary"
       />
 
-      {/* Execution Log Accordion */}
-      <div className="border border-navy-800 rounded-xl overflow-hidden">
+      <div className="border border-[#2a2a2a] rounded-2xl overflow-hidden shadow-sm bg-[#141414]">
         <button
           onClick={() => setShowExecutionLog(!showExecutionLog)}
-          className="w-full px-6 py-4 flex items-center justify-between bg-navy-900 hover:bg-navy-800 transition-colors"
+          className="w-full px-6 py-5 flex items-center justify-between hover:bg-[#1a1a1a] transition-colors"
         >
           <span className="text-sm font-medium text-slate-300">Show Your Math — Execution Trace</span>
           {showExecutionLog ? (
-            <ChevronUp className="w-4 h-4 text-slate-400" />
+            <ChevronUp className="w-5 h-5 text-slate-400" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-5 h-5 text-slate-400" />
           )}
         </button>
         {showExecutionLog && (
-          <div className="p-4 bg-navy-950/50">
+          <div className="p-6 bg-[#0a0a0a] border-t border-[#2a2a2a]">
             <AgentExecutionLog events={events} />
           </div>
         )}

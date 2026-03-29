@@ -8,7 +8,7 @@ import type {
 } from '../core/SessionState';
 
 export const FIRE_SAFE_WITHDRAWAL_RATE = 0.03;
-export const FIRE_STEP_UP_RATE = 0.10;
+export const FIRE_STEP_UP_RATE = 0.05;
 export const FIRE_DEFAULT_ITERATIONS = 1000;
 export const FIRE_DEFAULT_SEED = 20260329;
 
@@ -340,8 +340,8 @@ function runSimulationSummary(options: SimulationRunOptions): SimulationSummary 
         const available = equityCorpus + debtCorpus;
         if (available >= annualDraw) {
           const postWithdrawal = available - annualDraw;
-          equityCorpus = postWithdrawal * 0.60;
-          debtCorpus = postWithdrawal * 0.40;
+          equityCorpus = postWithdrawal * 0.40;
+          debtCorpus = postWithdrawal * 0.60;
         } else {
           shortfall += annualDraw - available;
           if (depletedAge === null) {

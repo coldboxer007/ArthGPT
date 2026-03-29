@@ -66,7 +66,7 @@ const taxPipelineSteps: LoadingPipelineStep[] = [
 ];
 
 const taxLoadingConfig: LoadingPipelineConfig = {
-  title: 'ArthaGPT is analysing',
+  title: 'ChanakAI is analysing',
   subtitle: 'Multi-agent tax pipeline executing in real-time.',
   traceLabel: 'InputCollector -> ParallelAgent (Old/New) -> TaxOptimizer -> ComplianceLoop',
   steps: taxPipelineSteps,
@@ -75,13 +75,13 @@ const taxLoadingConfig: LoadingPipelineConfig = {
 
 // Legacy fallback steps (used when no SSE connection — transition screen)
 const legacySteps = [
-  { text: 'Preparing your financial workspace...', agent: 'ArthaGPT Orchestrator' },
+  { text: 'Preparing your financial workspace...', agent: 'ChanakAI Orchestrator' },
   { text: 'Loading multi-agent analysis framework...', agent: 'Pipeline Registry' },
   { text: 'Initialising Portfolio X-Ray pipeline (7 agents)...', agent: 'Portfolio Pipeline' },
   { text: 'Initialising FIRE Roadmap pipeline (9 agents)...', agent: 'FIRE Pipeline' },
   { text: 'Initialising Tax Wizard pipeline (6 agents)...', agent: 'Tax Pipeline' },
   { text: 'Connecting to Gemini 2.5 Pro & Flash...', agent: 'LLM Gateway' },
-  { text: 'Your dashboard is ready.', agent: 'ArthaGPT • All Systems Go' },
+  { text: 'Your dashboard is ready.', agent: 'ChanakAI • All Systems Go' },
 ];
 
 interface StepStatus {
@@ -264,7 +264,7 @@ export function Loading({
           >
             <Sparkles className="w-8 h-8 text-gold-500" />
           </motion.div>
-          <h2 className="text-3xl font-semibold text-white">{useRealAgents ? activePipeline.title : 'ArthaGPT is analysing'}</h2>
+          <h2 className="text-3xl font-semibold text-white">{useRealAgents ? activePipeline.title : 'ChanakAI is analysing'}</h2>
           <p className="text-slate-400">
             {useRealAgents ? activePipeline.subtitle : 'Our multi-agent system is processing your financial life.'}
           </p>

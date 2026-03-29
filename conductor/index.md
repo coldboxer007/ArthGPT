@@ -1,6 +1,6 @@
 # Conductor Index
 
-Welcome to the ArthaGPT conductor workspace.
+Welcome to the ChanakAI conductor workspace.
 
 ## Project Context
 - [Product Definition](./product.md)

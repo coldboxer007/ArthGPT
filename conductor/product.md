@@ -1,7 +1,7 @@
-# ArthaGPT Product Definition
+# ChanakAI Product Definition
 
 ## Vision
-ArthaGPT aims to be India's first multi-agent AI financial advisor — free, instant, and built for every Indian. It democratizes financial advice by replacing human advisors with a sophisticated Multi-Agent System.
+ChanakAI aims to be India's first multi-agent AI financial advisor — free, instant, and built for every Indian. It democratizes financial advice by replacing human advisors with a sophisticated Multi-Agent System.
 
 ## The Problem
 95% of Indians have no financial plan. Currently, the system uses a single zero-shot prompt to Gemini 3.1 Pro for portfolio analysis, which fails to live up to the multi-agent orchestration advertised in the evaluation rubric.

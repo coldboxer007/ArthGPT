@@ -51,7 +51,6 @@ function computeTax(input: TaxInput) {
   const grossSalary = input.baseSalary + input.hraReceived;
   if (grossSalary <= 0) return null;
 
-  // Old Regime
   const oldSD = 50000;
   const hra1 = input.hraReceived;
   const hra2 = input.isMetro ? input.baseSalary * 0.5 : input.baseSalary * 0.4;
@@ -69,7 +68,6 @@ function computeTax(input: TaxInput) {
   const oldCess = oldAfterRebate * 0.04;
   const oldTotal = oldAfterRebate + oldCess;
 
-  // New Regime
   const newSD = 75000;
   const newTaxable = Math.max(0, grossSalary - newSD);
   const newSlabs = calcNewSlabs(newTaxable);
@@ -109,18 +107,16 @@ function computeTax(input: TaxInput) {
   };
 }
 
-// ── Helpers ──
 function parseNum(s: string): number { return parseInt(s.replace(/[^0-9]/g, '')) || 0; }
 function fmtINR(n: number): string { return new Intl.NumberFormat('en-IN').format(n); }
 function fmtCurrency(val: number) { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val); }
 
-// ── Editable input row ──
 function TaxInputRow({ label, value, onChange, max, hint }: { label: string; value: number; onChange: (v: number) => void; max?: number; hint?: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3 border-b border-navy-800/50 last:border-0">
+    <div className="flex items-center justify-between gap-4 py-3 border-b border-[#2a2a2a] last:border-0">
       <div className="flex-1 min-w-0">
         <span className="text-sm text-slate-300">{label}</span>
-        {hint && <span className="text-[10px] text-slate-600 block">{hint}</span>}
+        {hint && <span className="text-[10px] text-slate-500 block">{hint}</span>}
       </div>
       <div className="relative w-40">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">₹</span>
@@ -132,14 +128,13 @@ function TaxInputRow({ label, value, onChange, max, hint }: { label: string; val
             if (max !== undefined) v = Math.min(v, max);
             onChange(v);
           }}
-          className="w-full bg-navy-950 border border-navy-700 rounded-lg pl-6 pr-2 py-1.5 text-white text-sm text-right font-mono focus:outline-none focus:ring-1 focus:ring-gold-500/50"
+          className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg pl-6 pr-2 py-1.5 text-white text-sm text-right font-mono focus:outline-none focus:ring-1 focus:ring-teal-500/50 transition-all"
         />
       </div>
     </div>
   );
 }
 
-// ═══════════ Main Component ═══════════
 export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setProfile: Dispatch<SetStateAction<UserProfile>> }) {
   const [hraOpen, setHraOpen] = useState(false);
   const [slabOpen, setSlabOpen] = useState(false);
@@ -147,11 +142,8 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
   const [useAgentMode, setUseAgentMode] = useState(false);
   const [npsWhatIf, setNpsWhatIf] = useState(false);
   const infographic = useInfographic();
-
-  // Tax pipeline hook for multi-agent execution
   const { taxPipeline: pipeline } = useAnalysis();
 
-  // Local editable tax inputs — initialised from profile
   const [taxInputs, setTaxInputs] = useState<TaxInput>({
     baseSalary: profile.baseSalary || Math.round(profile.income * 0.833),
     hraReceived: profile.hraReceived || Math.round(profile.income * 0.167),
@@ -163,54 +155,30 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
     isMetro: profile.isMetro,
   });
 
-  // If user hasn't entered rent but is in a metro, default rent to HRA amount
   const firstRender = useState(true);
   if (firstRender[0] && taxInputs.rentPaid === 0 && taxInputs.hraReceived > 0) {
     firstRender[1](false);
     setTaxInputs(prev => ({ ...prev, rentPaid: prev.hraReceived }));
   }
 
-  // All calculation happens client-side (deterministic) — instant on every input change
   const data = useMemo(() => computeTax(taxInputs), [taxInputs]);
 
-  // NPS What-If: compute tax with full ₹50K NPS deduction under 80CCD(1B)
   const npsData = useMemo(() => {
     if (!npsWhatIf) return null;
     return computeTax({
       ...taxInputs,
-      section80CCD1B: 50000, // Max NPS deduction under 80CCD(1B)
+      section80CCD1B: 50000,
     });
   }, [npsWhatIf, taxInputs]);
 
   const npsSavings = useMemo(() => {
     if (!data || !npsData) return 0;
-    // Only Old Regime benefits from 80CCD(1B); New Regime ignores it
     return data.oldRegime.totalTaxLiability - npsData.oldRegime.totalTaxLiability;
   }, [data, npsData]);
 
-  // Extract AI-generated narrative from pipeline result
   const aiNarrative = useMemo(() => {
     if (!pipeline.result) return null;
-    const result = pipeline.result as {
-      tax_optimization?: {
-        narrative?: string;
-        suggestions?: Array<{
-          instrument: string;
-          section: string;
-          maxBenefit: number;
-          lockIn: string;
-          riskLevel: string;
-          description: string;
-        }>;
-        missedDeductions?: Array<{
-          section: string;
-          missedAmount: number;
-          potentialSaving: number;
-          description: string;
-        }>;
-      };
-      compliant_narrative?: string;
-    };
+    const result = pipeline.result as any;
     return {
       narrative: result.compliant_narrative || result.tax_optimization?.narrative,
       suggestions: result.tax_optimization?.suggestions,
@@ -218,21 +186,10 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
     };
   }, [pipeline.result]);
 
-  // Run pipeline when agent mode is enabled
   const runPipeline = useCallback(() => {
-    pipeline.execute({
-      baseSalary: taxInputs.baseSalary,
-      hraReceived: taxInputs.hraReceived,
-      rentPaid: taxInputs.rentPaid,
-      section80C: taxInputs.section80C,
-      section80CCD1B: taxInputs.section80CCD1B,
-      section80D: taxInputs.section80D,
-      homeLoanInterest: taxInputs.homeLoanInterest,
-      isMetro: taxInputs.isMetro,
-    });
+    pipeline.execute(taxInputs);
   }, [taxInputs, pipeline]);
 
-  // Sync back to profile when inputs change
   const syncToProfile = useCallback(() => {
     setProfile(p => ({
       ...p,
@@ -264,7 +221,7 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
   if (!data) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <AlertCircle className="w-12 h-12 text-coral-500" />
+        <AlertCircle className="w-12 h-12 text-red-500" />
         <h3 className="text-xl font-semibold text-white">Income data required</h3>
         <p className="text-slate-400 text-center max-w-md">
           We need your salary details to calculate taxes. Please go back to Step 1 and enter your annual income.
@@ -276,14 +233,13 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
   const salaryInLakhs = `₹${(data.oldRegime.grossSalary / 100000).toFixed(0)}L`;
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      <header className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-8 max-w-5xl mx-auto w-full">
+      <header className="flex flex-col gap-4">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Tax Wizard</h2>
           <p className="text-slate-400 mt-1">FY 2025-26 Regime Comparison & Optimisation.</p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Agent Mode Toggle */}
           <button
             onClick={() => {
               if (!useAgentMode) {
@@ -296,8 +252,8 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-xl border transition-colors text-sm font-medium",
               useAgentMode 
-                ? "border-teal-500 text-teal-500 bg-teal-500/10" 
-                : "border-navy-700 text-slate-400 hover:text-slate-200 hover:border-navy-600"
+                ? "border-teal-500 text-teal-400 bg-teal-500/10" 
+                : "border-[#333] text-slate-400 hover:text-slate-200 hover:border-[#444]"
             )}
             disabled={pipeline.isLoading}
           >
@@ -312,7 +268,7 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
             onClick={() => setEditMode(!editMode)}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-xl border transition-colors text-sm font-medium",
-              editMode ? "border-gold-500 text-gold-500 bg-gold-500/10" : "border-navy-700 text-slate-400 hover:text-slate-200 hover:border-navy-600"
+              editMode ? "border-teal-500 text-teal-400 bg-teal-500/10" : "border-[#333] text-slate-400 hover:text-slate-200 hover:border-[#444]"
             )}
           >
             <Edit3 className="w-4 h-4" />
@@ -321,21 +277,19 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
         </div>
       </header>
 
-      {/* Agent Execution Log */}
       {useAgentMode && pipeline.events.length > 0 && (
         <AgentExecutionLog events={pipeline.events} isLoading={pipeline.isLoading} />
       )}
 
-      {/* AI-Generated Insights */}
       {useAgentMode && aiNarrative?.narrative && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-6 rounded-2xl bg-gradient-to-r from-teal-500/10 to-blue-500/10 border border-teal-500/30"
+          className="p-6 rounded-2xl bg-teal-500/10 border border-teal-500/30 shadow-lg"
         >
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-teal-500" />
+              <Sparkles className="w-5 h-5 text-teal-400" />
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-white mb-2">AI Tax Optimizer Insights</h3>
@@ -347,7 +301,6 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
         </motion.div>
       )}
 
-      {/* Editable Inputs Panel */}
       <AnimatePresence>
         {editMode && (
           <motion.div
@@ -356,9 +309,9 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="p-6 rounded-2xl bg-navy-900 border border-gold-500/30 space-y-1">
+            <div className="p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a] space-y-1 shadow-md">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Calculator className="w-5 h-5 text-gold-500" />
+                <Calculator className="w-5 h-5 text-teal-400" />
                 Your Salary Breakup & Deductions
               </h3>
               <TaxInputRow label="Basic Salary (per annum)" value={taxInputs.baseSalary} onChange={(v) => setTaxInputs(p => ({ ...p, baseSalary: v }))} hint="Typically 40-50% of CTC" />
@@ -367,14 +320,14 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
               <TaxInputRow label="Section 80C" value={taxInputs.section80C} onChange={(v) => setTaxInputs(p => ({ ...p, section80C: v }))} max={150000} hint="ELSS, PPF, EPF, LIC — max ₹1.5L" />
               <TaxInputRow label="Section 80CCD(1B) — NPS" value={taxInputs.section80CCD1B} onChange={(v) => setTaxInputs(p => ({ ...p, section80CCD1B: v }))} max={50000} hint="Additional NPS — max ₹50K" />
               <TaxInputRow label="Section 80D — Health Insurance" value={taxInputs.section80D} onChange={(v) => setTaxInputs(p => ({ ...p, section80D: v }))} max={100000} hint="Self ₹25K + Parents ₹25-50K" />
-              <TaxInputRow label="Home Loan Interest (Section 24b)" value={taxInputs.homeLoanInterest} onChange={(v) => setTaxInputs(p => ({ ...p, homeLoanInterest: v }))} max={200000} hint="Self-occupied — max ₹2L" />
+              <TaxInputRow label="Home Loan Interest (24b)" value={taxInputs.homeLoanInterest} onChange={(v) => setTaxInputs(p => ({ ...p, homeLoanInterest: v }))} max={200000} hint="Self-occupied — max ₹2L" />
               <div className="flex items-center justify-between py-3 mt-2">
                 <span className="text-sm text-slate-300">Metro City (Mumbai, Delhi, Bengaluru, etc.)</span>
                 <button
                   onClick={() => setTaxInputs(p => ({ ...p, isMetro: !p.isMetro }))}
                   className={cn(
                     "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors border",
-                    taxInputs.isMetro ? "border-teal-500 text-teal-500 bg-teal-500/10" : "border-navy-700 text-slate-400"
+                    taxInputs.isMetro ? "border-teal-500 text-teal-400 bg-teal-500/10" : "border-[#333] text-slate-400 bg-[#0a0a0a]"
                   )}
                 >
                   {taxInputs.isMetro ? 'Yes' : 'No'}
@@ -385,15 +338,14 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
         )}
       </AnimatePresence>
 
-      {/* Winner Banner */}
-      <div className="p-8 rounded-3xl bg-gradient-to-r from-navy-800 to-navy-900 border border-gold-500/30 flex items-center justify-between relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <div className="p-8 rounded-2xl bg-[#141414] border border-[#2a2a2a] relative overflow-hidden shadow-lg">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-500/20 text-gold-500 text-sm font-semibold uppercase tracking-wider mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 text-teal-400 text-sm font-semibold uppercase tracking-wider mb-4">
             <CheckCircle2 className="w-4 h-4" /> Recommended
           </div>
           <h3 className="text-4xl font-bold text-white mb-2">
-            {data.winner === 'new' ? 'New' : 'Old'} Tax Regime saves you <span className="text-gold-500">{fmtCurrency(data.savings)}</span> this year
+            {data.winner === 'new' ? 'New' : 'Old'} Tax Regime saves you <span className="text-teal-400">{fmtCurrency(data.savings)}</span> this year
           </h3>
           <p className="text-slate-300 text-lg">
             Based on your declared salary of {salaryInLakhs} and current deductions.
@@ -401,18 +353,18 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="flex flex-col gap-6 w-full">
         {/* Comparison Table */}
-        <div className="lg:col-span-2 p-6 rounded-2xl bg-navy-900 border border-navy-800">
+        <div className="w-full p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a] shadow-md">
           <h3 className="text-xl font-semibold text-white mb-6">Side-by-Side Comparison</h3>
           
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left table-auto">
               <thead>
-                <tr className="border-b border-navy-800">
-                  <th className="pb-4 font-medium text-slate-400">Line Item</th>
-                  <th className="pb-4 font-medium text-coral-500/80 text-right pr-6">Old Regime</th>
-                  <th className="pb-4 font-medium text-teal-500 text-right pl-6 border-l border-navy-800">New Regime</th>
+                <tr className="border-b border-[#333]">
+                  <th className="pb-4 font-medium text-slate-400 whitespace-nowrap">Line Item</th>
+                  <th className="pb-4 font-medium text-red-400/80 text-right pr-6 whitespace-nowrap">Old Regime</th>
+                  <th className="pb-4 font-medium text-teal-400 text-right pl-6 border-l border-[#333] whitespace-nowrap">New Regime</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -425,57 +377,56 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
                   { label: 'Home Loan Interest (24b)', old: data.oldRegime.homeLoanInterest, new: 0, isDeduction: true },
                   { label: 'Section 80D (Health)', old: data.oldRegime.section80D, new: 0, isDeduction: true },
                 ].map((row, i) => (
-                  <tr key={i} className="border-b border-navy-800/50">
+                  <tr key={i} className="border-b border-[#333]/50">
                     <td className="py-4 text-slate-300">{row.label}</td>
                     <td className="py-4 text-right font-mono pr-6">
-                      <span className={row.isDeduction && row.old > 0 ? "text-coral-400" : "text-slate-300"}>
+                      <span className={row.isDeduction && row.old > 0 ? "text-red-400" : "text-slate-300"}>
                         {row.isDeduction && row.old > 0 ? '-' : ''}{fmtCurrency(row.old)}
                       </span>
                     </td>
-                    <td className="py-4 text-right font-mono pl-6 border-l border-navy-800">
+                    <td className="py-4 text-right font-mono pl-6 border-l border-[#333]">
                       <span className={row.isDeduction && row.new > 0 ? "text-teal-400" : row.new === 0 && row.isDeduction ? "text-slate-500" : "text-slate-300"}>
                         {row.isDeduction && row.new > 0 ? '-' : ''}{row.new === 0 && row.isDeduction ? '₹0' : fmtCurrency(row.new)}
                       </span>
                     </td>
                   </tr>
                 ))}
-                <tr className="border-b border-navy-800/50 bg-navy-950/30">
+                <tr className="border-b border-[#333]/50 bg-[#0a0a0a]/30">
                   <td className="py-4 font-medium text-white">Taxable Income</td>
                   <td className="py-4 text-right font-mono font-medium text-white pr-6">{fmtCurrency(data.oldRegime.taxableIncome)}</td>
-                  <td className="py-4 text-right font-mono font-medium text-white pl-6 border-l border-navy-800">{fmtCurrency(data.newRegime.taxableIncome)}</td>
+                  <td className="py-4 text-right font-mono font-medium text-white pl-6 border-l border-[#333]">{fmtCurrency(data.newRegime.taxableIncome)}</td>
                 </tr>
-                <tr className="border-b border-navy-800/50">
+                <tr className="border-b border-[#333]/50">
                   <td className="py-4 text-slate-300">Tax on Slab</td>
                   <td className="py-4 text-right font-mono text-slate-300 pr-6">{fmtCurrency(data.oldRegime.taxOnSlab)}</td>
-                  <td className="py-4 text-right font-mono text-slate-300 pl-6 border-l border-navy-800">{fmtCurrency(data.newRegime.taxOnSlab)}</td>
+                  <td className="py-4 text-right font-mono text-slate-300 pl-6 border-l border-[#333]">{fmtCurrency(data.newRegime.taxOnSlab)}</td>
                 </tr>
                 {(data.oldRegime.rebate87A > 0 || data.newRegime.rebate87A > 0) && (
-                  <tr className="border-b border-navy-800/50">
+                  <tr className="border-b border-[#333]/50">
                     <td className="py-4 text-slate-300">Rebate u/s 87A</td>
                     <td className="py-4 text-right font-mono text-emerald-400 pr-6">{data.oldRegime.rebate87A > 0 ? `-${fmtCurrency(data.oldRegime.rebate87A)}` : '₹0'}</td>
-                    <td className="py-4 text-right font-mono text-emerald-400 pl-6 border-l border-navy-800">{data.newRegime.rebate87A > 0 ? `-${fmtCurrency(data.newRegime.rebate87A)}` : '₹0'}</td>
+                    <td className="py-4 text-right font-mono text-emerald-400 pl-6 border-l border-[#333]">{data.newRegime.rebate87A > 0 ? `-${fmtCurrency(data.newRegime.rebate87A)}` : '₹0'}</td>
                   </tr>
                 )}
-                <tr className="border-b border-navy-800/50">
+                <tr className="border-b border-[#333]/50">
                   <td className="py-4 text-slate-300">Health & Education Cess (4%)</td>
                   <td className="py-4 text-right font-mono text-slate-300 pr-6">{fmtCurrency(data.oldRegime.cess)}</td>
-                  <td className="py-4 text-right font-mono text-slate-300 pl-6 border-l border-navy-800">{fmtCurrency(data.newRegime.cess)}</td>
+                  <td className="py-4 text-right font-mono text-slate-300 pl-6 border-l border-[#333]">{fmtCurrency(data.newRegime.cess)}</td>
                 </tr>
                 <tr>
                   <td className="py-6 font-bold text-lg text-white">Total Tax Liability</td>
                   <td className={cn("py-6 text-right font-mono font-bold text-lg pr-6", data.winner === 'old' ? "text-emerald-400 text-2xl bg-emerald-500/5 rounded-l-xl" : "text-slate-400")}>{fmtCurrency(data.oldRegime.totalTaxLiability)}</td>
-                  <td className={cn("py-6 text-right font-mono font-bold text-lg pl-6 border-l border-navy-800", data.winner === 'new' ? "text-emerald-400 text-2xl bg-emerald-500/5 rounded-r-xl" : "text-slate-400")}>{fmtCurrency(data.newRegime.totalTaxLiability)}</td>
+                  <td className={cn("py-6 text-right font-mono font-bold text-lg pl-6 border-l border-[#333]", data.winner === 'new' ? "text-emerald-400 text-2xl bg-emerald-500/5 rounded-r-xl" : "text-slate-400")}>{fmtCurrency(data.newRegime.totalTaxLiability)}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {/* HRA Accordion */}
           {data.oldRegime.hraExemption > 0 && (
-            <div className="mt-8 border border-navy-700 rounded-xl overflow-hidden">
+            <div className="mt-8 border border-[#2a2a2a] rounded-xl overflow-hidden shadow-sm">
               <button 
                 onClick={() => setHraOpen(!hraOpen)}
-                className="w-full flex items-center justify-between p-4 bg-navy-800 hover:bg-navy-700/50 transition-colors"
+                className="w-full flex items-center justify-between p-4 bg-[#141414] hover:bg-[#1a1a1a] transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Calculator className="w-5 h-5 text-slate-400" />
@@ -489,20 +440,20 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="bg-navy-900 border-t border-navy-700 p-6"
+                    className="bg-[#0a0a0a] border-t border-[#2a2a2a] p-6"
                   >
                     <p className="text-sm text-slate-400 mb-4">
                       HRA exemption is the minimum of the following three conditions (Section 10(13A)):
                     </p>
-                    <div className="space-y-3 font-mono text-sm">
+                    <div className="space-y-3 font-mono text-sm flex flex-col">
                       {[
                         { label: '1. Actual HRA received', value: data.hraBreakdown.hraReceived, isMin: data.oldRegime.hraExemption === data.hraBreakdown.hraReceived },
                         { label: `2. ${taxInputs.isMetro ? '50' : '40'}% of Basic Salary (${taxInputs.isMetro ? 'Metro' : 'Non-Metro'})`, value: data.hraBreakdown.metroLimit, isMin: data.oldRegime.hraExemption === data.hraBreakdown.metroLimit },
                         { label: '3. Rent paid minus 10% of Basic', value: data.hraBreakdown.rentMinus10Percent, isMin: data.oldRegime.hraExemption === data.hraBreakdown.rentMinus10Percent },
                       ].map((item, i) => (
                         <div key={i} className={cn(
-                          "flex justify-between items-center p-3 rounded-lg border",
-                          item.isMin ? "bg-teal-500/10 border-teal-500/30" : "bg-navy-950/50 border-navy-800"
+                          "flex justify-between items-center p-3 rounded-xl border",
+                          item.isMin ? "bg-teal-500/10 border-teal-500/30 shadow-inner" : "bg-[#141414]/50 border-[#2a2a2a]"
                         )}>
                           <span className={item.isMin ? "text-teal-400 font-medium" : "text-slate-300"}>{item.label}</span>
                           <span className={item.isMin ? "text-teal-400 font-bold" : "text-white"}>{fmtCurrency(item.value)}</span>
@@ -518,11 +469,10 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
             </div>
           )}
 
-          {/* Slab Breakdown Accordion */}
-          <div className="mt-4 border border-navy-700 rounded-xl overflow-hidden">
+          <div className="mt-4 border border-[#2a2a2a] rounded-xl overflow-hidden shadow-sm">
             <button 
               onClick={() => setSlabOpen(!slabOpen)}
-              className="w-full flex items-center justify-between p-4 bg-navy-800 hover:bg-navy-700/50 transition-colors"
+              className="w-full flex items-center justify-between p-4 bg-[#141414] hover:bg-[#1a1a1a] transition-colors"
             >
               <div className="flex items-center gap-3">
                 <BarChart3 className="w-5 h-5 text-slate-400" />
@@ -536,25 +486,26 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="bg-navy-900 border-t border-navy-700 p-6"
+                  className="bg-[#0a0a0a] border-t border-[#2a2a2a] p-6"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-6">
                     <div>
-                      <h4 className="text-sm font-semibold text-coral-400 mb-3 uppercase tracking-wider">Old Regime Slabs</h4>
+                      <h4 className="text-sm font-semibold text-red-400 mb-3 uppercase tracking-wider">Old Regime Slabs</h4>
                       <div className="space-y-2 font-mono text-sm">
                         {data.oldRegime.slabBreakdown.map((slab, i) => (
-                          <div key={i} className="flex justify-between items-center p-2 rounded-lg bg-navy-950/50 border border-navy-800">
+                          <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-[#141414] border border-[#2a2a2a]">
                             <span className="text-slate-300 text-xs">{slab.slab} ({slab.rate})</span>
                             <span className="text-white">{fmtCurrency(slab.amount)}</span>
                           </div>
                         ))}
                       </div>
                     </div>
+                    <div className="w-full h-px bg-[#2a2a2a]"></div>
                     <div>
                       <h4 className="text-sm font-semibold text-teal-400 mb-3 uppercase tracking-wider">New Regime Slabs</h4>
                       <div className="space-y-2 font-mono text-sm">
                         {data.newRegime.slabBreakdown.map((slab, i) => (
-                          <div key={i} className="flex justify-between items-center p-2 rounded-lg bg-navy-950/50 border border-navy-800">
+                          <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-[#141414] border border-[#2a2a2a]">
                             <span className="text-slate-300 text-xs">{slab.slab} ({slab.rate})</span>
                             <span className="text-white">{fmtCurrency(slab.amount)}</span>
                           </div>
@@ -568,15 +519,14 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
           </div>
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Tax Visual Comparison */}
-          <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800">
+        {/* Supplementary Info Cards Stacked */}
+        <div className="flex flex-col gap-6 w-full">
+          <div className="p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a] shadow-sm">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-gold-500" />
+              <BarChart3 className="w-5 h-5 text-teal-400" />
               Visual Tax Comparison
             </h3>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart
                 data={[
                   { regime: 'Old Regime', tax: data.oldRegime.totalTaxLiability },
@@ -587,28 +537,27 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
                 <XAxis dataKey="regime" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}K`} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} width={55} />
                 <Tooltip
-                  contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
+                  contentStyle={{ background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '12px', fontSize: '12px' }}
                   formatter={(val: number) => [fmtCurrency(val), 'Tax']}
                 />
                 <Bar dataKey="tax" radius={[8, 8, 0, 0]} barSize={48}>
-                  <Cell fill={data.winner === 'old' ? '#10b981' : '#FF6B6B'} />
-                  <Cell fill={data.winner === 'new' ? '#10b981' : '#FF6B6B'} />
+                  <Cell fill={data.winner === 'old' ? '#00e5ff' : '#ef4444'} />
+                  <Cell fill={data.winner === 'new' ? '#00e5ff' : '#ef4444'} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
             <div className="mt-3 text-center">
-              <p className="text-xs text-slate-500">
-                {data.winner === 'new' ? 'New' : 'Old'} regime saves <span className="text-gold-500 font-semibold">{fmtCurrency(data.savings)}</span>
+              <p className="text-xs text-slate-400">
+                {data.winner === 'new' ? 'New' : 'Old'} regime saves <span className="text-teal-400 font-semibold">{fmtCurrency(data.savings)}</span>
               </p>
             </div>
           </div>
 
-          {/* NPS What-If Toggle */}
           {data && data.missedDeductions.section80CCD1B > 0 && (
-            <div className="p-5 rounded-2xl bg-navy-900 border border-navy-800">
+            <div className="p-5 rounded-2xl bg-[#141414] border border-[#2a2a2a]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <PiggyBank className="w-5 h-5 text-gold-500" />
+                  <PiggyBank className="w-5 h-5 text-teal-400" />
                   <div>
                     <h4 className="text-sm font-semibold text-white">NPS What-If</h4>
                     <p className="text-xs text-slate-400">What if you invest ₹50,000 in NPS?</p>
@@ -618,7 +567,7 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
                   onClick={() => setNpsWhatIf(prev => !prev)}
                   className={cn(
                     'relative w-12 h-6 rounded-full transition-colors',
-                    npsWhatIf ? 'bg-gold-500' : 'bg-navy-700'
+                    npsWhatIf ? 'bg-teal-500' : 'bg-[#333]'
                   )}
                 >
                   <span className={cn(
@@ -628,7 +577,6 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
                 </button>
               </div>
 
-              {/* Show savings when toggled on */}
               <AnimatePresence>
                 {npsWhatIf && npsSavings > 0 && (
                   <motion.div
@@ -638,8 +586,8 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="mt-4 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                      <p className="text-sm text-emerald-400">
+                    <div className="mt-4 p-4 rounded-xl bg-teal-500/10 border border-teal-500/20">
+                      <p className="text-sm text-teal-400">
                         You save <span className="font-bold text-lg">{fmtCurrency(npsSavings)}</span> in tax under Old Regime
                       </p>
                       <p className="text-xs text-slate-400 mt-1">
@@ -653,11 +601,10 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
             </div>
           )}
 
-          {/* Missed Deductions */}
           {(data.missedDeductions.section80D > 0 || data.missedDeductions.section80CCD1B > 0) && (
-            <div className="p-6 rounded-2xl bg-navy-900 border border-gold-500/30 relative overflow-hidden">
+            <div className="p-6 rounded-2xl bg-[#141414] border border-teal-500/30 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10">
-                <AlertCircle className="w-24 h-24 text-gold-500" />
+                <AlertCircle className="w-24 h-24 text-teal-400" />
               </div>
               <div className="relative z-10">
                 <h3 className="text-xl font-semibold text-white mb-4">Missed Deductions</h3>
@@ -667,10 +614,10 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
                 
                 <div className="space-y-4">
                   {data.missedDeductions.section80D > 0 && (
-                    <div className="p-4 rounded-xl bg-navy-950/50 border border-navy-800">
+                    <div className="p-4 rounded-xl bg-[#0a0a0a] border border-[#2a2a2a]">
                       <div className="flex justify-between items-start mb-2">
                         <span className="font-medium text-white">80D Health Insurance</span>
-                        <span className="text-xs font-bold text-gold-500 bg-gold-500/10 px-2 py-1 rounded">
+                        <span className="text-xs font-bold text-teal-400 bg-teal-400/10 px-2 py-1 rounded">
                           Saves {fmtCurrency(data.missedDeductions.potentialTaxSaving80D)}
                         </span>
                       </div>
@@ -679,10 +626,10 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
                   )}
                   
                   {data.missedDeductions.section80CCD1B > 0 && (
-                    <div className="p-4 rounded-xl bg-navy-950/50 border border-navy-800">
+                    <div className="p-4 rounded-xl bg-[#0a0a0a] border border-[#2a2a2a]">
                       <div className="flex justify-between items-start mb-2">
                         <span className="font-medium text-white">80CCD(1B) Additional NPS</span>
-                        <span className="text-xs font-bold text-gold-500 bg-gold-500/10 px-2 py-1 rounded">
+                        <span className="text-xs font-bold text-teal-400 bg-teal-400/10 px-2 py-1 rounded">
                           Saves {fmtCurrency(data.missedDeductions.potentialTaxSaving80CCD1B)}
                         </span>
                       </div>
@@ -694,25 +641,24 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
             </div>
           )}
 
-          {/* Recommended Instruments */}
-          <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800">
+          <div className="p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a]">
             <h3 className="text-lg font-semibold text-white mb-4">Top Tax-Saving Instruments</h3>
             <p className="text-xs text-slate-400 mb-4">Ranked by ease & liquidity. Tax savings at your marginal rate ({(data.marginalRate * 100).toFixed(1)}%).</p>
             <div className="space-y-3">
               {[
                 { icon: TrendingUp, color: 'teal', name: 'ELSS Mutual Funds', desc: '3-yr lock-in • Equity returns • 80C eligible', savings: Math.round(150000 * data.marginalRate) },
-                { icon: ShieldCheck, color: 'gold', name: 'Public Provident Fund (PPF)', desc: '15-yr lock-in • 7.1% guaranteed • 80C eligible', savings: Math.round(150000 * data.marginalRate) },
+                { icon: ShieldCheck, color: 'teal', name: 'Public Provident Fund (PPF)', desc: '15-yr lock-in • 7.1% guaranteed • 80C eligible', savings: Math.round(150000 * data.marginalRate) },
                 { icon: PiggyBank, color: 'blue', name: 'NPS Tier 1', desc: 'Retirement lock-in • 80CCD(1B) • Extra ₹50K', savings: Math.round(50000 * data.marginalRate) },
               ].map((item) => (
-                <div key={item.name} className="flex items-center gap-4 p-3 rounded-xl hover:bg-navy-800 transition-colors cursor-pointer group">
+                <div key={item.name} className="flex items-center gap-4 p-3 rounded-xl hover:bg-[#1a1a1a] border border-transparent hover:border-[#333] transition-colors cursor-pointer group">
                   <div className={`w-10 h-10 rounded-full bg-${item.color}-500/10 flex items-center justify-center shrink-0 group-hover:bg-${item.color}-500/20 transition-colors`}>
-                    <item.icon className={`w-5 h-5 text-${item.color}-500`} />
+                    <item.icon className={`w-5 h-5 text-${item.color}-400`} />
                   </div>
                   <div className="flex-1">
                     <h4 className="text-sm font-medium text-white">{item.name}</h4>
                     <p className="text-xs text-slate-400">{item.desc}</p>
                   </div>
-                  <span className="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded shrink-0">
+                  <span className="text-xs font-bold text-teal-400 bg-teal-500/10 px-2 py-1 rounded shrink-0">
                     Saves ~{fmtCurrency(item.savings)}/yr
                   </span>
                 </div>
@@ -720,26 +666,24 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
             </div>
           </div>
 
-          {/* Effective Tax Rate */}
-          <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800">
+          <div className="p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a]">
             <h3 className="text-lg font-semibold text-white mb-4">Effective Tax Rate</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-navy-950/50 border border-navy-800 text-center">
-                <p className="text-xs text-slate-400 mb-1">Old Regime</p>
-                <p className="text-2xl font-bold font-mono text-coral-400">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-5 rounded-xl bg-[#0a0a0a] border border-[#2a2a2a] text-center shadow-inner">
+                <p className="text-sm text-slate-400 mb-2">Old Regime</p>
+                <p className="text-3xl font-bold font-mono text-red-400">
                   {data.oldRegime.grossSalary > 0 ? ((data.oldRegime.totalTaxLiability / data.oldRegime.grossSalary) * 100).toFixed(1) : '0'}%
                 </p>
               </div>
-              <div className="p-4 rounded-xl bg-navy-950/50 border border-navy-800 text-center">
-                <p className="text-xs text-slate-400 mb-1">New Regime</p>
-                <p className="text-2xl font-bold font-mono text-teal-400">
+              <div className="p-5 rounded-xl bg-[#0a0a0a] border border-[#2a2a2a] text-center shadow-inner">
+                <p className="text-sm text-slate-400 mb-2">New Regime</p>
+                <p className="text-3xl font-bold font-mono text-teal-400">
                   {data.newRegime.grossSalary > 0 ? ((data.newRegime.totalTaxLiability / data.newRegime.grossSalary) * 100).toFixed(1) : '0'}%
                 </p>
               </div>
             </div>
           </div>
 
-          {/* ── Nano Banana 2 Infographic ── */}
           <InfographicCard
             image={infographic.image}
             isLoading={infographic.isLoading}

@@ -1,7 +1,7 @@
-# ArthGPT Architecture Gap Closure - Master Plan
+# ChanakAI Architecture Gap Closure - Master Plan
 
 ## Objective
-Close 5 architecture gaps to make ArthGPT top-1% competitive for ET AI Hackathon 2026 Track 9.
+Close 5 architecture gaps to make ChanakAI top-1% competitive for ET AI Hackathon 2026 Track 9.
 
 ## Gaps (Priority Order)
 
