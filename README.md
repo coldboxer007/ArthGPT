@@ -87,54 +87,11 @@ src/server/agents/core/
 
 Every pipeline follows the same pattern: **Sequential stages, with parallel fan-out within stages, ending in a compliance loop.**
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                     ChanakAI Multi-Agent Orchestrator                        │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────────┐  ┌──────────────────────┐  ┌────────────────────┐  │
-│  │  Portfolio Pipeline  │  │   FIRE Pipeline      │  │  Tax Pipeline      │  │
-│  │  8 agents, 4 stages  │  │   9 agents, 5 stages │  │  7 agents, 4 stgs  │  │
-│  │                      │  │                      │  │                    │  │
-│  │  S1: Ingestion       │  │  S1: [GoalProfiler   │  │  S1: InputCollect  │  │
-│  │      (MFapi.in       │  │       ‖ MacroAgent]   │  │      (Gemini       │  │
-│  │       enrichment)    │  │                      │  │       extraction)  │  │
-│  │                      │  │  S2: [MonteCarlo     │  │                    │  │
-│  │  S2: [XIRR ‖ Overlap │  │       ‖ SipGlidepath │  │  S2: [OldRegime    │  │
-│  │       ‖ Expense      │  │       ‖ InsuranceGap]│  │       ‖ NewRegime] │  │
-│  │       ‖ Benchmark]   │  │                      │  │                    │  │
-│  │                      │  │  S3: AdjustedMC      │  │  S3: TaxOptimizer  │  │
-│  │  S3: Rebalancing     │  │   → RoadmapBuilder   │  │      (Gemini Pro)  │  │
-│  │      Strategist      │  │      (Gemini 3.1 Pro)│  │                    │  │
-│  │      (Gemini Pro)    │  │                      │  │  S4: Compliance    │  │
-│  │                      │  │  S4: Compliance      │  │      Loop ×2       │  │
-│  │  S4: Compliance      │  │      Loop ×2         │  │                    │  │
-│  │      Loop ×2         │  │                      │  │                    │  │
-│  └──────────┬───────────┘  └──────────┬───────────┘  └─────────┬──────────┘  │
-│             │                         │                        │             │
-│             └────────────┬────────────┘────────────────────────┘             │
-│                          ▼                                                   │
-│              ┌────────────────────────┐                                      │
-│              │  Cross-Pipeline Context │ ← AnalysisContext merges results    │
-│              │  (tax regime, XIRR,     │    from all 3 pipelines into a      │
-│              │   FIRE probability,     │    unified CrossPipelineData object  │
-│              │   deductions, corpus)   │                                     │
-│              └───────────┬────────────┘                                      │
-│                          ▼                                                   │
-│              ┌────────────────────────┐                                      │
-│              │   Root Orchestrator     │                                      │
-│              │  Intent Classifier      │ ← Gemini 2.5 Flash                  │
-│              │  + Advisory Engine      │ ← Gemini 3 Flash                    │
-│              │  (profile + pipeline    │                                      │
-│              │   results + documents   │                                      │
-│              │   + chat history)       │                                      │
-│              └────────────────────────┘                                      │
-├──────────────────────────────────────────────────────────────────────────────┤
-│  SSE Streaming: Each pipeline streams agent_start, agent_complete,           │
-│  pipeline_complete events in real-time via /api/v2/*-pipeline endpoints.     │
-│  The useSSE hook renders live agent progress in the Loading component.       │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<div align="center">
+<img src="diagrams/multiagent.png" alt="ChanakAI Multi-Agent Orchestration Architecture" width="900" />
+<br/><br/>
+<em>Multi-Agent Orchestration — 24 agents across 3 pipelines with cross-pipeline context sharing, compliance loops, and SSE streaming. Each pipeline runs sequential stages with parallel fan-out (Promise.allSettled), merging results into a unified AnalysisContext for the Root Orchestrator's advisory engine.</em>
+</div>
 
 ### 24 Agents — Complete Inventory
 
@@ -265,6 +222,12 @@ Input your age, income, expenses, investments, and goals — get a complete fina
 | Inflation | 6% ± 1.5% std dev, clamped [-1%, +15%] |
 | Life expectancy | 85 years |
 
+<div align="center">
+<img src="diagrams/montecralo-screenshota.png" alt="ChanakAI Monte Carlo Simulation Approach" width="900" />
+<br/><br/>
+<em>Monte Carlo Simulation Architecture — 1,000 iterations with seeded Mulberry32 PRNG for reproducible results. Equity returns sampled from 12% ± 18% (clamped [-55%, +70%]), debt returns from FD/bond rates, inflation from 6% ± 1.5%. The fan chart renders P10/P50/P90 corpus bands, with an adjusted Monte Carlo re-run using the computed required SIP when baseline success probability is low.</em>
+</div>
+
 ### What-If Builder — Dynamic Scenario Planning
 
 Four interactive sliders for real-time "what if?" exploration — **no full re-run required**.
@@ -344,6 +307,12 @@ Each persona fills all onboarding fields — age, city, income, 8 investment typ
 ---
 
 ## Compliance & Enterprise Readiness
+
+<div align="center">
+<img src="diagrams/mathvmind.png" alt="ChanakAI Math vs Mind Architecture — SEBI Compliance Validation" width="900" />
+<br/><br/>
+<em>Math vs Mind Architecture — ChanakAI separates deterministic computation ("Math") from AI reasoning ("Mind") at every layer. DeterministicAgents handle tax slabs, XIRR, Monte Carlo, and SIP calculations with verifiable, reproducible outputs. LlmAgents handle narrative generation, optimization suggestions, and compliance review. The LoopAgent-based compliance cycle ensures all AI-generated content passes SEBI-compliant validation — no certainty claims, no return promises, no unlicensed advice — before reaching the user.</em>
+</div>
 
 | Layer | What It Does |
 |---|---|
