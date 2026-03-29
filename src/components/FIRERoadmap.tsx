@@ -1,10 +1,22 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertCircle, Info, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
+import { useInfographic } from '../hooks/useInfographic';
+import { InfographicCard } from './InfographicCard';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 import { Loading, type LoadingPipelineConfig } from './Loading';
 import type { UserProfile } from '../App';
+import { useAnalysis } from '../contexts/AnalysisContext';
 import {
-  useFirePipeline,
   type FirePipelineResult,
   type FireSummary,
   type MonteCarloResults,
@@ -91,7 +103,7 @@ function normalizeFireResult(result: FirePipelineResult | null) {
 const FIRE_LOADING_CONFIG: LoadingPipelineConfig = {
   title: 'Building your FIRE roadmap',
   subtitle: 'Nested agents are simulating retirement outcomes from your inputs and live macro assumptions.',
-  traceLabel: 'GoalProfiler -> MacroAgent -> MonteCarlo -> SIP Glidepath -> Insurance Gap -> Roadmap -> Compliance',
+  traceLabel: 'GoalProfiler -> MacroAgent -> MonteCarlo -> SIP Glidepath -> Insurance Gap -> Adjusted MC -> Roadmap -> Compliance',
   steps: [
     {
       id: 'goal',
@@ -127,6 +139,13 @@ const FIRE_LOADING_CONFIG: LoadingPipelineConfig = {
       agent: 'InsuranceGapAgent • Deterministic',
       stage: 2,
       agentMatches: ['InsuranceGapAgent'],
+    },
+    {
+      id: 'adjusted-mc',
+      text: 'Re-simulating with required SIP...',
+      agent: 'AdjustedMonteCarloEngine • Deterministic',
+      stage: 2,
+      agentMatches: ['AdjustedMonteCarloEngine'],
     },
     {
       id: 'roadmap',
@@ -210,8 +229,103 @@ function MiniTag({ label, value }: { label: string; value: string }) {
   );
 }
 
+function formatCompactINR(value: number): string {
+  if (value >= 1e7) return `₹${(value / 1e7).toFixed(1)}Cr`;
+  if (value >= 1e5) return `₹${(value / 1e5).toFixed(1)}L`;
+  if (value >= 1e3) return `₹${(value / 1e3).toFixed(0)}K`;
+  return `₹${value.toFixed(0)}`;
+}
+
+function FanChart({ data, retirementAge }: { data: { age: number; p10: number; p50: number; p90: number }[]; retirementAge: number }) {
+  if (!data || data.length < 2) return null;
+  return (
+    <SectionCard title="Monte Carlo Fan Chart" icon={<Info className="w-4 h-4 text-slate-500" />}>
+      <p className="text-xs text-slate-500 mb-4">
+        Corpus projection across 1,000 simulations — P10 (worst), P50 (median), P90 (best). Vertical line = retirement.
+      </p>
+      <ResponsiveContainer width="100%" height={320}>
+        <AreaChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+          <defs>
+            <linearGradient id="fanP90" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+            </linearGradient>
+            <linearGradient id="fanP50" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#D4AF37" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#D4AF37" stopOpacity={0.05} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+          <XAxis
+            dataKey="age"
+            tick={{ fill: '#64748b', fontSize: 11 }}
+            tickLine={false}
+            axisLine={{ stroke: '#334155' }}
+          />
+          <YAxis
+            tickFormatter={formatCompactINR}
+            tick={{ fill: '#64748b', fontSize: 11 }}
+            tickLine={false}
+            axisLine={{ stroke: '#334155' }}
+            width={60}
+          />
+          <Tooltip
+            contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
+            labelStyle={{ color: '#94a3b8' }}
+            formatter={(val: number, name: string) => [fmtCurrency(val), name]}
+            labelFormatter={(age) => `Age ${age}`}
+          />
+          <Area type="monotone" dataKey="p90" name="P90 (Upside)" stroke="#10b981" fill="url(#fanP90)" strokeWidth={1.5} dot={false} />
+          <Area type="monotone" dataKey="p50" name="P50 (Median)" stroke="#D4AF37" fill="url(#fanP50)" strokeWidth={2} dot={false} />
+          <Area type="monotone" dataKey="p10" name="P10 (Downside)" stroke="#f87171" fill="none" strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
+          <Legend wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </SectionCard>
+  );
+}
+
+function GlidepathChart({ data }: { data: { age: number; equity: number; debt: number }[] }) {
+  if (!data || data.length < 2) return null;
+  return (
+    <SectionCard title="Asset Glidepath" icon={<Info className="w-4 h-4 text-slate-500" />}>
+      <p className="text-xs text-slate-500 mb-4">
+        Equity/debt allocation shifts from aggressive to conservative as you approach retirement.
+      </p>
+      <ResponsiveContainer width="100%" height={260}>
+        <AreaChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+          <XAxis
+            dataKey="age"
+            tick={{ fill: '#64748b', fontSize: 11 }}
+            tickLine={false}
+            axisLine={{ stroke: '#334155' }}
+          />
+          <YAxis
+            domain={[0, 100]}
+            tickFormatter={(v) => `${v}%`}
+            tick={{ fill: '#64748b', fontSize: 11 }}
+            tickLine={false}
+            axisLine={{ stroke: '#334155' }}
+            width={45}
+          />
+          <Tooltip
+            contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
+            labelFormatter={(age) => `Age ${age}`}
+            formatter={(val: number, name: string) => [`${val}%`, name]}
+          />
+          <Area type="monotone" dataKey="equity" name="Equity" stackId="1" stroke="#D4AF37" fill="#D4AF37" fillOpacity={0.3} strokeWidth={2} />
+          <Area type="monotone" dataKey="debt" name="Debt" stackId="1" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.2} strokeWidth={2} />
+          <Legend wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </SectionCard>
+  );
+}
+
 export function FIRERoadmap({ profile }: { profile: UserProfile }) {
-  const pipeline = useFirePipeline();
+  const { firePipeline: pipeline } = useAnalysis();
+  const infographic = useInfographic();
 
   const fireInput = useMemo(
     () => ({
@@ -241,6 +355,26 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
     // Removed abort on unmount to allow background processing
   }, [fireInput]);
 
+  // ── Data extraction (safe for null result — normalizeFireResult handles null) ──
+  const data = normalizeFireResult(pipeline.result);
+  const sources = data.sources;
+  const actions = data.actions;
+  const timeline = data.timeline;
+  const firstYearPlan = data.firstYearMonthlyPlan;
+
+  const handleGenerateInfographic = useCallback(() => {
+    infographic.generate('fire', {
+      age: fireInput.age,
+      retireAge: fireInput.retireAge,
+      income: fireInput.income,
+      successProbability: data.successProbability >= 0 && data.successProbability <= 1 ? data.successProbability * 100 : data.successProbability,
+      p50Corpus: data.p50Corpus,
+      requiredSip: data.medianSipRequired,
+      insuranceGap: data.insuranceGap,
+      macroSourceMode: data.macroSourceMode,
+    });
+  }, [infographic, fireInput, data]);
+
   if (profile.income <= 0) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
@@ -254,11 +388,16 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
   }
 
   if (pipeline.isError) {
+    const isNetworkError = pipeline.error?.toLowerCase().includes('failed to fetch') || pipeline.error?.toLowerCase().includes('networkerror');
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <AlertCircle className="w-12 h-12 text-coral-500" />
         <h3 className="text-xl font-semibold text-white">FIRE analysis failed</h3>
-        <p className="text-slate-400 text-center max-w-md">{pipeline.error || 'An error occurred while building the FIRE pipeline.'}</p>
+        <p className="text-slate-400 text-center max-w-md">
+          {isNetworkError
+            ? 'Could not connect to the server. Please make sure the dev server is running (npm run dev) and try again.'
+            : (pipeline.error || 'An error occurred while building the FIRE pipeline.')}
+        </p>
         <button
           onClick={() => pipeline.execute(fireInput)}
           className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-navy-950 font-semibold hover:bg-gold-400 transition-colors"
@@ -300,12 +439,6 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
       </div>
     );
   }
-
-  const data = normalizeFireResult(pipeline.result);
-  const sources = data.sources;
-  const actions = data.actions;
-  const timeline = data.timeline;
-  const firstYearPlan = data.firstYearMonthlyPlan;
 
   return (
     <AnimatePresence mode="wait">
@@ -351,6 +484,12 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
           <MetricCard label="P10 Worst Case" value={fmtCurrency(data.p10Corpus)} subtext="Downside corpus at retirement" positive={false} />
           <MetricCard label="P50 Median" value={fmtCurrency(data.p50Corpus)} subtext="Median retirement corpus" />
           <MetricCard label="P90 Upside" value={fmtCurrency(data.p90Corpus)} subtext="Upper-range retirement corpus" />
+        </div>
+
+        {/* ── Charts ── */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <FanChart data={data.fanChartData as { age: number; p10: number; p50: number; p90: number }[]} retirementAge={fireInput.retireAge} />
+          <GlidepathChart data={data.glidepath} />
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -525,6 +664,16 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
             </div>
           </SectionCard>
         </div>
+
+        {/* ── Nano Banana 2 Infographic ── */}
+        <InfographicCard
+          image={infographic.image}
+          isLoading={infographic.isLoading}
+          error={infographic.error}
+          onGenerate={handleGenerateInfographic}
+          onReset={infographic.reset}
+          label="FIRE Roadmap Summary"
+        />
 
         <div className="mt-6 p-5 rounded-2xl bg-navy-900/50 border border-navy-800">
           <div className="flex items-center gap-2 mb-3">

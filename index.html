@@ -10,6 +10,19 @@
   </head>
   <body>
     <div id="root"></div>
+    <div id="js-error-overlay" style="display:none;position:fixed;inset:0;background:#0a0a0a;color:#ff6b6b;font-family:monospace;font-size:13px;padding:32px;z-index:99999;overflow:auto;white-space:pre-wrap;"></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        var el = document.getElementById('js-error-overlay');
+        el.style.display = 'block';
+        el.textContent = '⚠ Uncaught JS Error\n\n' + (e.message || '') + '\n\n' + (e.filename || '') + ':' + e.lineno + ':' + e.colno + '\n\n' + (e.error && e.error.stack ? e.error.stack : '');
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        var el = document.getElementById('js-error-overlay');
+        el.style.display = 'block';
+        el.textContent += '\n\n⚠ Unhandled Promise Rejection\n\n' + (e.reason && e.reason.stack ? e.reason.stack : String(e.reason));
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

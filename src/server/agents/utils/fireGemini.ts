@@ -54,29 +54,32 @@ Requirements:
 - Use only current India-focused sources.
 - Each metric must include source label and URL.
 - If a metric is estimated from multiple searched facts, explain that in notes.
-- Keep notes short and factual.`,
+- Keep notes short and factual.
+
+Return ONLY a JSON object (no markdown fences) with this exact structure:
+{
+  "repoRate": { "value": 0.065, "asOf": "2025-06-01", "sourceLabel": "RBI", "sourceUrl": "...", "notes": "..." },
+  "inflationRate": { "value": 0.052, "asOf": "...", "sourceLabel": "...", "sourceUrl": "...", "notes": "..." },
+  "niftyMeanReturn": { "value": 0.125, "asOf": "...", "sourceLabel": "...", "sourceUrl": "...", "notes": "..." },
+  "niftyStdDev": { "value": 0.185, "asOf": "...", "sourceLabel": "...", "sourceUrl": "...", "notes": "..." },
+  "bondYield": { "value": 0.071, "asOf": "...", "sourceLabel": "...", "sourceUrl": "...", "notes": "..." },
+  "fdRate": { "value": 0.068, "asOf": "...", "sourceLabel": "...", "sourceUrl": "...", "notes": "..." },
+  "notes": "brief overall summary"
+}`,
     config: {
-      responseMimeType: 'application/json',
-      responseJsonSchema: {
-        type: Type.OBJECT,
-        properties: {
-          repoRate: macroMetricSchema('Current RBI repo rate'),
-          inflationRate: macroMetricSchema('Latest India CPI inflation rate'),
-          niftyMeanReturn: macroMetricSchema('Long-run annual return assumption for Nifty 50 as decimal'),
-          niftyStdDev: macroMetricSchema('Annualized Nifty 50 volatility assumption as decimal'),
-          bondYield: macroMetricSchema('Current India 10-year government bond yield'),
-          fdRate: macroMetricSchema('Current SBI FD rate'),
-          notes: { type: Type.STRING },
-        },
-        required: ['repoRate', 'inflationRate', 'niftyMeanReturn', 'niftyStdDev', 'bondYield', 'fdRate'],
-      },
+      // NOTE: Gemini does NOT support responseMimeType + tools together.
+      // We use Google Search grounding for live data, then parse the JSON from the text.
       temperature: 0.1,
       seed: 20260329,
       tools: [{ googleSearch: {} }],
     },
   });
 
-  const parsed = JSON.parse(response.text || '{}') as Record<string, MacroMetricPayload>;
+  // Extract JSON from the response text (may be wrapped in markdown code fences)
+  const raw = (response.text || '').trim();
+  const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, raw];
+  const jsonStr = (jsonMatch[1] || raw).trim();
+  const parsed = JSON.parse(jsonStr) as Record<string, MacroMetricPayload>;
   return normalizeMacroParameters(parsed, today);
 }
 

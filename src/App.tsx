@@ -4,6 +4,7 @@ import { Onboarding } from './components/Onboarding';
 import { Loading } from './components/Loading';
 import { Dashboard } from './components/Dashboard';
 import { AnalysisProvider } from './contexts/AnalysisContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export interface UserProfile {
   age: number;
@@ -25,6 +26,11 @@ export interface UserProfile {
   targetMonthlyExpense: number;
   declaredLifeCover: number;
   monthlySipCurrent: number;
+}
+
+export interface UploadedDocument {
+  file: File;
+  docType: string;
 }
 
 const defaultProfile: UserProfile = {
@@ -50,16 +56,31 @@ const defaultProfile: UserProfile = {
 export default function App() {
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
 
   const nextStep = () => setStep((s) => s + 1);
+  const prevStep = () => setStep((s) => Math.max(0, s - 1));
   const handleLoadingComplete = useCallback(() => setStep(6), []);
+  const handleStartOver = useCallback(() => {
+    setStep(0);
+    setProfile(defaultProfile);
+    setUploadedDocs([]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-navy-950 text-slate-100 font-sans selection:bg-gold-500/30">
       <AnimatePresence mode="wait">
         {step < 5 && (
           <motion.div key="onboarding" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <Onboarding step={step} nextStep={nextStep} profile={profile} setProfile={setProfile} />
+            <Onboarding
+              step={step}
+              nextStep={nextStep}
+              prevStep={prevStep}
+              profile={profile}
+              setProfile={setProfile}
+              uploadedDocs={uploadedDocs}
+              setUploadedDocs={setUploadedDocs}
+            />
           </motion.div>
         )}
         {step === 5 && (
@@ -70,7 +91,9 @@ export default function App() {
         {step === 6 && (
           <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <AnalysisProvider>
-              <Dashboard profile={profile} setProfile={setProfile} />
+              <ErrorBoundary label="Dashboard">
+                <Dashboard profile={profile} setProfile={setProfile} uploadedDocs={uploadedDocs} onStartOver={handleStartOver} />
+              </ErrorBoundary>
             </AnalysisProvider>
           </motion.div>
         )}

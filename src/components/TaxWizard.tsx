@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, TrendingUp, ShieldCheck, PiggyBank, Calculator, Loader2, BarChart3, Edit3, Sparkles, Cpu } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { cn } from '../lib/utils';
 import type { UserProfile } from '../App';
 import { useAnalysis } from '../contexts/AnalysisContext';
 import { type AgentEvent } from '../hooks/useSSE';
 import { AgentExecutionLog } from './AgentExecutionLog';
+import { useInfographic } from '../hooks/useInfographic';
+import { InfographicCard } from './InfographicCard';
 
 // ── Client-side tax engine (kept for instant reactivity during editing) ──
 interface TaxInput {
@@ -142,6 +145,7 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
   const [slabOpen, setSlabOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [useAgentMode, setUseAgentMode] = useState(false);
+  const infographic = useInfographic();
 
   // Tax pipeline hook for multi-agent execution
   const { taxPipeline: pipeline } = useAnalysis();
@@ -227,6 +231,19 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
   }, [taxInputs, setProfile]);
 
   useEffect(() => { syncToProfile(); }, [syncToProfile]);
+
+  const handleGenerateInfographic = useCallback(() => {
+    if (!data) return;
+    const missedTotal = (data.missedDeductions.section80D || 0) + (data.missedDeductions.section80CCD1B || 0);
+    infographic.generate('tax', {
+      oldRegimeTax: data.oldRegime.totalTaxLiability,
+      newRegimeTax: data.newRegime.totalTaxLiability,
+      savings: data.savings,
+      winner: data.winner,
+      grossSalary: data.oldRegime.grossSalary,
+      missedDeductions: missedTotal,
+    });
+  }, [infographic, data]);
 
   if (!data) {
     return (
@@ -537,6 +554,39 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
 
         {/* Right Column */}
         <div className="space-y-6">
+          {/* Tax Visual Comparison */}
+          <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800">
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-gold-500" />
+              Visual Tax Comparison
+            </h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart
+                data={[
+                  { regime: 'Old Regime', tax: data.oldRegime.totalTaxLiability },
+                  { regime: 'New Regime', tax: data.newRegime.totalTaxLiability },
+                ]}
+                margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+              >
+                <XAxis dataKey="regime" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}K`} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} width={55} />
+                <Tooltip
+                  contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
+                  formatter={(val: number) => [fmtCurrency(val), 'Tax']}
+                />
+                <Bar dataKey="tax" radius={[8, 8, 0, 0]} barSize={48}>
+                  <Cell fill={data.winner === 'old' ? '#10b981' : '#FF6B6B'} />
+                  <Cell fill={data.winner === 'new' ? '#10b981' : '#FF6B6B'} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="mt-3 text-center">
+              <p className="text-xs text-slate-500">
+                {data.winner === 'new' ? 'New' : 'Old'} regime saves <span className="text-gold-500 font-semibold">{fmtCurrency(data.savings)}</span>
+              </p>
+            </div>
+          </div>
+
           {/* Missed Deductions */}
           {(data.missedDeductions.section80D > 0 || data.missedDeductions.section80CCD1B > 0) && (
             <div className="p-6 rounded-2xl bg-navy-900 border border-gold-500/30 relative overflow-hidden">
@@ -622,6 +672,16 @@ export function TaxWizard({ profile, setProfile }: { profile: UserProfile; setPr
               </div>
             </div>
           </div>
+
+          {/* ── Nano Banana 2 Infographic ── */}
+          <InfographicCard
+            image={infographic.image}
+            isLoading={infographic.isLoading}
+            error={infographic.error}
+            onGenerate={handleGenerateInfographic}
+            onReset={infographic.reset}
+            label="Tax Comparison Summary"
+          />
         </div>
       </div>
     </div>

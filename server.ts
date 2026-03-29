@@ -7,6 +7,7 @@ import { calculateTax } from './src/server/taxEngine';
 import { calculateFire } from './src/server/fireEngine';
 import { GoogleGenAI } from '@google/genai';
 import { FirePipeline, PortfolioPipeline, TaxPipeline, type AgentEvent } from './src/server/agents';
+import { generateFireInfographic, generatePortfolioInfographic, generateTaxInfographic } from './src/server/agents/utils/imageGen';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -468,6 +469,56 @@ async function startServer() {
         { stage: 3, name: 'RoadmapBuilder', type: 'LlmAgent' },
         { stage: 4, name: 'ComplianceLoop', type: 'LoopAgent', agents: ['ComplianceChecker', 'DisclaimerInjector'] },
       ],
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V2 Infographic Generation — Nano Banana 2 (gemini-3.1-flash-image-preview)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * POST /api/v2/generate-infographic
+   *
+   * Uses Nano Banana 2 to generate a visual summary card.
+   * Request Body: { type: 'fire' | 'portfolio' | 'tax', data: {...} }
+   * Response: { imageBase64, mimeType, caption }
+   */
+  app.post('/api/v2/generate-infographic', async (req, res) => {
+    try {
+      const { type, data } = req.body || {};
+      if (!type || !data) {
+        return res.status(400).json({ error: 'type and data are required' });
+      }
+
+      let result;
+      switch (type) {
+        case 'fire':
+          result = await generateFireInfographic(data);
+          break;
+        case 'portfolio':
+          result = await generatePortfolioInfographic(data);
+          break;
+        case 'tax':
+          result = await generateTaxInfographic(data);
+          break;
+        default:
+          return res.status(400).json({ error: `Unknown infographic type: ${type}` });
+      }
+
+      res.json(result);
+    } catch (e) {
+      console.error('Infographic generation error:', e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  app.get('/api/v2/generate-infographic/status', (_req, res) => {
+    res.json({
+      status: 'ready',
+      version: '2.0',
+      model: 'gemini-3.1-flash-image-preview',
+      alias: 'Nano Banana 2',
+      capabilities: ['fire-infographic', 'portfolio-infographic', 'tax-infographic'],
     });
   });
 

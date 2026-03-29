@@ -73,15 +73,15 @@ const taxLoadingConfig: LoadingPipelineConfig = {
   footer: 'Live agent execution trace • Streaming via SSE',
 };
 
-// Legacy fallback steps (used when no SSE connection)
+// Legacy fallback steps (used when no SSE connection — transition screen)
 const legacySteps = [
-  { text: 'Reading your portfolio statement...', agent: 'CASParser API' },
-  { text: 'Fetching NAV history for 6 funds...', agent: 'mfapi.in' },
-  { text: 'Calculating your true XIRR...', agent: 'Portfolio Agent • Gemini 3.1 Pro' },
-  { text: 'Checking for stock overlap...', agent: 'Portfolio Agent • Overlap Analysis' },
-  { text: 'Computing tax under both regimes...', agent: 'Tax Agent • Deterministic Engine' },
-  { text: 'Building your retirement roadmap...', agent: 'FIRE Agent • Deterministic Engine' },
-  { text: 'Generating your personalised report...', agent: 'Narrative Agent • Gemini 3 Flash' },
+  { text: 'Preparing your financial workspace...', agent: 'ArthaGPT Orchestrator' },
+  { text: 'Loading multi-agent analysis framework...', agent: 'Pipeline Registry' },
+  { text: 'Initialising Portfolio X-Ray pipeline (7 agents)...', agent: 'Portfolio Pipeline' },
+  { text: 'Initialising FIRE Roadmap pipeline (9 agents)...', agent: 'FIRE Pipeline' },
+  { text: 'Initialising Tax Wizard pipeline (6 agents)...', agent: 'Tax Pipeline' },
+  { text: 'Connecting to Gemini 2.5 Pro & Flash...', agent: 'LLM Gateway' },
+  { text: 'Your dashboard is ready.', agent: 'ArthaGPT • All Systems Go' },
 ];
 
 interface StepStatus {
@@ -194,7 +194,7 @@ export function Loading({
       setLegacyStep((prev) => {
         if (prev >= legacySteps.length - 1) {
           clearInterval(interval);
-          setTimeout(onComplete, 1000);
+          setTimeout(onComplete, 600);
           return prev;
         }
 
@@ -207,7 +207,7 @@ export function Loading({
         });
         return next;
       });
-    }, 1200);
+    }, 700);
 
     timestamps.current[0] = new Date().toLocaleTimeString([], {
       hour12: false,
@@ -354,7 +354,7 @@ export function Loading({
 
         <div className="text-center">
           <p className="text-xs text-slate-600">
-            {useRealAgents ? activePipeline.footer || 'Live agent execution trace • Streaming via SSE' : 'Total processing time: ~8 seconds'}
+            {useRealAgents ? activePipeline.footer || 'Live agent execution trace • Streaming via SSE' : 'Initialising workspace • Pipelines execute on demand inside each module'}
           </p>
         </div>
       </motion.div>

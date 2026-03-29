@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "ArthaGPT Dev Server",
+			"type": "shell",
+			"command": "source ~/.nvm/nvm.sh && nvm use 22 && node --env-file=.env.local --import tsx server.ts",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

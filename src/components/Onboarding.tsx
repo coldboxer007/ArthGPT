@@ -1,14 +1,17 @@
 import { motion } from 'motion/react';
-import { ArrowRight, UploadCloud, CheckCircle2, IndianRupee, Briefcase, Home, GraduationCap, TrendingUp, ShieldCheck, AlertCircle, X, FileText, Lock } from 'lucide-react';
+import { ArrowRight, ArrowLeft, UploadCloud, CheckCircle2, IndianRupee, Briefcase, Home, GraduationCap, TrendingUp, ShieldCheck, AlertCircle, X, FileText, Lock, Info } from 'lucide-react';
 import { useState, useRef, type Dispatch, type SetStateAction, type DragEvent, type ChangeEvent } from 'react';
 import { cn } from '../lib/utils';
-import type { UserProfile } from '../App';
+import type { UserProfile, UploadedDocument } from '../App';
 
 interface OnboardingProps {
   step: number;
   nextStep: () => void;
+  prevStep: () => void;
   profile: UserProfile;
   setProfile: Dispatch<SetStateAction<UserProfile>>;
+  uploadedDocs: UploadedDocument[];
+  setUploadedDocs: Dispatch<SetStateAction<UploadedDocument[]>>;
 }
 
 // ───────── helpers ─────────
@@ -51,7 +54,7 @@ function validateStep2(investments: { type: string; value: number }[]): Validati
 }
 
 // ───────── component ─────────
-export function Onboarding({ step, nextStep, profile, setProfile }: OnboardingProps) {
+export function Onboarding({ step, nextStep, prevStep, profile, setProfile, uploadedDocs, setUploadedDocs }: OnboardingProps) {
   const [goals, setGoals] = useState<string[]>(profile.goals);
   const [selectedInvestments, setSelectedInvestments] = useState<Record<string, boolean>>({});
   const [investmentValues, setInvestmentValues] = useState<Record<string, string>>({});
@@ -60,6 +63,7 @@ export function Onboarding({ step, nextStep, profile, setProfile }: OnboardingPr
   const [uploadPassword, setUploadPassword] = useState('');
   const [showPasswordInput, setShowPasswordInput] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showDocHelp, setShowDocHelp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getError = (field: string) => errors.find(e => e.field === field)?.message;
@@ -127,23 +131,49 @@ export function Onboarding({ step, nextStep, profile, setProfile }: OnboardingPr
     });
   };
 
-  // ── Step 4: file upload ──
+  // ── Step 4: file upload (multi-document) ──
+  const DOCUMENT_TYPES = [
+    { id: 'cams', label: 'CAMS / KFintech Statement', module: 'Portfolio X-Ray', desc: 'Your consolidated mutual fund account statement (PDF from CAMS or KFintech). Contains NAVs, units, transactions.', formats: 'PDF' },
+    { id: 'form16', label: 'Form 16', module: 'Tax Wizard', desc: 'Annual tax certificate from your employer (Part A + Part B). Contains salary breakup, TDS, deductions.', formats: 'PDF' },
+    { id: 'bankstmt', label: 'Bank Statement', module: 'FIRE Roadmap', desc: 'Recent 6-12 month bank statement showing expenses, SIP debits, and income credits.', formats: 'PDF, CSV' },
+    { id: 'demat', label: 'Demat Holding Statement', module: 'Portfolio X-Ray', desc: 'NSDL/CDSL holding statement for equity and bond holdings outside mutual funds.', formats: 'PDF' },
+    { id: 'insurance', label: 'Insurance Policy Summary', module: 'FIRE Roadmap', desc: 'Life/health insurance policy documents showing sum assured and premiums.', formats: 'PDF' },
+  ];
+
+  function detectDocType(file: File): string {
+    const name = file.name.toLowerCase();
+    if (name.includes('cams') || name.includes('kfintech') || name.includes('cas')) return 'cams';
+    if (name.includes('form16') || name.includes('form-16') || name.includes('form 16')) return 'form16';
+    if (name.includes('bank') || name.includes('statement')) return 'bankstmt';
+    if (name.includes('demat') || name.includes('nsdl') || name.includes('cdsl')) return 'demat';
+    if (name.includes('insurance') || name.includes('policy')) return 'insurance';
+    return 'cams'; // default
+  }
+
   const handleFileDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
+    const files = e.dataTransfer.files;
+    if (files) {
+      for (let i = 0; i < files.length; i++) {
+        processFile(files[i]);
+      }
+    }
   };
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
+    const files = e.target.files;
+    if (files) {
+      for (let i = 0; i < files.length; i++) {
+        processFile(files[i]);
+      }
+    }
   };
 
   const processFile = (file: File) => {
     const validTypes = ['application/pdf', 'text/csv', 'application/vnd.ms-excel'];
     if (!validTypes.includes(file.type) && !file.name.endsWith('.pdf') && !file.name.endsWith('.csv')) {
-      setErrors([{ field: 'file', message: 'Please upload a PDF or CSV file (CAMS, KFintech, or Form 16)' }]);
+      setErrors([{ field: 'file', message: 'Please upload a PDF or CSV file (CAMS, KFintech, Form 16, or bank statement)' }]);
       return;
     }
     if (file.size > 25 * 1024 * 1024) {
@@ -151,8 +181,25 @@ export function Onboarding({ step, nextStep, profile, setProfile }: OnboardingPr
       return;
     }
     setErrors([]);
-    setUploadedFile(file);
+    const docType = detectDocType(file);
+    setUploadedDocs(prev => [...prev, { file, docType }]);
+    setUploadedFile(file); // Keep legacy compat
     setShowPasswordInput(true);
+  };
+
+  const removeUploadedFile = (index: number) => {
+    setUploadedDocs(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length === 0) {
+        setUploadedFile(null);
+        setShowPasswordInput(false);
+      }
+      return updated;
+    });
+  };
+
+  const updateDocType = (index: number, newType: string) => {
+    setUploadedDocs(prev => prev.map((item, i) => i === index ? { ...item, docType: newType } : item));
   };
 
   const handleUploadContinue = () => {
@@ -314,6 +361,9 @@ export function Onboarding({ step, nextStep, profile, setProfile }: OnboardingPr
           <button onClick={handleStep1Continue} className="w-full py-4 bg-white text-navy-950 rounded-xl font-medium hover:bg-slate-100 transition-colors">
             Continue
           </button>
+          <button onClick={prevStep} className="w-full py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center justify-center gap-1">
+            <ArrowLeft className="w-3 h-3" /> Back
+          </button>
         </motion.div>
       )}
 
@@ -373,9 +423,14 @@ export function Onboarding({ step, nextStep, profile, setProfile }: OnboardingPr
           <button onClick={handleInvestmentContinue} className="w-full py-4 bg-white text-navy-950 rounded-xl font-medium hover:bg-slate-100 transition-colors">
             Continue
           </button>
-          <button onClick={() => { setProfile(p => ({ ...p, investments: [] })); nextStep(); }} className="w-full py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors">
-            I don't have investments yet — skip
-          </button>
+          <div className="flex gap-3">
+            <button onClick={prevStep} className="flex-1 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center justify-center gap-1">
+              <ArrowLeft className="w-3 h-3" /> Back
+            </button>
+            <button onClick={() => { setProfile(p => ({ ...p, investments: [] })); nextStep(); }} className="flex-1 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors">
+              I don't have investments yet — skip
+            </button>
+          </div>
         </motion.div>
       )}
 
@@ -425,6 +480,66 @@ export function Onboarding({ step, nextStep, profile, setProfile }: OnboardingPr
             <p className="text-sm text-slate-500 text-center">Select at least one goal, or skip to see all modules.</p>
           )}
 
+          {/* ── FIRE / Retirement Inputs ── */}
+          <div className="space-y-4 p-6 rounded-2xl bg-navy-900/50 border border-navy-800">
+            <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Retirement & Lifestyle Details</h3>
+            <p className="text-xs text-slate-500">These power the Monte Carlo simulation and insurance gap analysis.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400">Target Retirement Age</label>
+                <input
+                  type="number"
+                  min={profile.age + 1 || 30}
+                  max={80}
+                  placeholder="e.g. 50"
+                  value={profile.retireAge || ''}
+                  onChange={(e) => setProfile(p => ({ ...p, retireAge: clamp(parseInt(e.target.value) || 0, 0, 85) }))}
+                  className="w-full bg-navy-950 border border-navy-700 rounded-lg px-3 py-2 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-gold-500/50"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400">Monthly Expense in Retirement (₹)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 1,00,000"
+                  value={profile.targetMonthlyExpense ? formatIndianNumber(profile.targetMonthlyExpense) : ''}
+                  onChange={(e) => setProfile(p => ({ ...p, targetMonthlyExpense: parseIndianNumber(e.target.value) }))}
+                  className="w-full bg-navy-950 border border-navy-700 rounded-lg px-3 py-2 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-gold-500/50"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400">Current Monthly SIP (₹)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 25,000"
+                  value={profile.monthlySipCurrent ? formatIndianNumber(profile.monthlySipCurrent) : ''}
+                  onChange={(e) => setProfile(p => ({ ...p, monthlySipCurrent: parseIndianNumber(e.target.value) }))}
+                  className="w-full bg-navy-950 border border-navy-700 rounded-lg px-3 py-2 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-gold-500/50"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400">Life Insurance Cover (₹)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 1,00,00,000"
+                  value={profile.declaredLifeCover ? formatIndianNumber(profile.declaredLifeCover) : ''}
+                  onChange={(e) => setProfile(p => ({ ...p, declaredLifeCover: parseIndianNumber(e.target.value) }))}
+                  className="w-full bg-navy-950 border border-navy-700 rounded-lg px-3 py-2 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-gold-500/50"
+                />
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-600">Leave any field blank to use smart defaults (e.g. monthly expense = 50% of take-home).</p>
+            {profile.retireAge > 0 && profile.age > 0 && profile.retireAge <= profile.age && (
+              <p className="text-xs text-coral-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Retirement age must be greater than your current age ({profile.age}).</p>
+            )}
+            {profile.retireAge > 0 && profile.age > 0 && profile.retireAge > profile.age && (
+              <p className="text-[10px] text-teal-500 mt-1">
+                🎯 {profile.retireAge - profile.age} years to FIRE — {profile.targetMonthlyExpense > 0 ? `targeting ₹${formatIndianNumber(profile.targetMonthlyExpense)}/mo` : "we\u2019ll estimate your expenses"}
+              </p>
+            )}
+          </div>
+
           <button
             onClick={() => {
               if (goals.length === 0) {
@@ -436,6 +551,9 @@ export function Onboarding({ step, nextStep, profile, setProfile }: OnboardingPr
           >
             {goals.length > 0 ? 'Continue' : 'Show me everything'}
           </button>
+          <button onClick={prevStep} className="w-full py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center justify-center gap-1">
+            <ArrowLeft className="w-3 h-3" /> Back
+          </button>
         </motion.div>
       )}
 
@@ -445,66 +563,115 @@ export function Onboarding({ step, nextStep, profile, setProfile }: OnboardingPr
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
-          className="w-full space-y-8"
+          className="w-full space-y-6"
         >
           <div className="space-y-2">
-            <h2 className="text-3xl font-semibold text-white">Upload your statements</h2>
-            <p className="text-slate-400">For precise analysis, upload your CAMS/KFintech PDF or Form 16.</p>
+            <h2 className="text-3xl font-semibold text-white">Upload your documents</h2>
+            <p className="text-slate-400">Upload one or more documents for each module. We'll auto-route them.</p>
           </div>
 
-          {!uploadedFile ? (
-            <div
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleFileDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                "border-2 border-dashed rounded-3xl p-12 flex flex-col items-center justify-center text-center cursor-pointer bg-navy-900/50 transition-all duration-300 group",
-                isDragging ? "border-gold-500 bg-gold-500/5 scale-[1.02]" : "border-navy-700 hover:border-gold-500/50"
-              )}
+          {/* Document help toggle */}
+          <button
+            onClick={() => setShowDocHelp(!showDocHelp)}
+            className="flex items-center gap-2 text-sm text-gold-500 hover:text-gold-400 transition-colors"
+          >
+            <Info className="w-4 h-4" />
+            {showDocHelp ? 'Hide document guide' : 'Which documents do I need?'}
+          </button>
+
+          {showDocHelp && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="space-y-3"
             >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.csv"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <div className={cn(
-                "w-16 h-16 rounded-full flex items-center justify-center mb-6 transition-all",
-                isDragging ? "bg-gold-500/20 scale-110" : "bg-navy-800 group-hover:scale-110"
-              )}>
-                <UploadCloud className="w-8 h-8 text-gold-500" />
-              </div>
-              <h3 className="text-xl font-medium text-white mb-2">
-                {isDragging ? 'Drop it here!' : 'Drag & drop your PDF here'}
-              </h3>
-              <p className="text-sm text-slate-400 max-w-xs">
-                Supports CAMS PDF, KFintech PDF, Form 16, and CSV exports. Max 25MB.
-              </p>
-              {getError('file') && (
-                <p className="text-sm text-coral-500 mt-4 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />{getError('file')}
-                </p>
-              )}
+              {DOCUMENT_TYPES.map((doc) => (
+                <div key={doc.id} className="p-4 rounded-xl bg-navy-900 border border-navy-700">
+                  <div className="flex items-start gap-3">
+                    <FileText className="w-5 h-5 text-gold-500 mt-0.5 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-medium text-white text-sm">{doc.label}</h4>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 font-medium">{doc.module}</span>
+                        <span className="text-[10px] text-slate-600">{doc.formats}</span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-1">{doc.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Drop zone */}
+          <div
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleFileDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(
+              "border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center text-center cursor-pointer bg-navy-900/50 transition-all duration-300 group",
+              isDragging ? "border-gold-500 bg-gold-500/5 scale-[1.02]" : "border-navy-700 hover:border-gold-500/50"
+            )}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.csv"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <div className={cn(
+              "w-14 h-14 rounded-full flex items-center justify-center mb-4 transition-all",
+              isDragging ? "bg-gold-500/20 scale-110" : "bg-navy-800 group-hover:scale-110"
+            )}>
+              <UploadCloud className="w-7 h-7 text-gold-500" />
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="p-6 rounded-2xl bg-navy-900 border border-teal-500/30 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
-                  <FileText className="w-6 h-6 text-teal-500" />
+            <h3 className="text-lg font-medium text-white mb-1">
+              {isDragging ? 'Drop files here!' : 'Drag & drop your files here'}
+            </h3>
+            <p className="text-sm text-slate-400 max-w-xs">
+              Supports multiple files — CAMS PDF, Form 16, bank statements, insurance docs. Max 25MB each.
+            </p>
+            {getError('file') && (
+              <p className="text-sm text-coral-500 mt-3 flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />{getError('file')}
+              </p>
+            )}
+          </div>
+
+          {/* Uploaded files list */}
+          {uploadedDocs.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-slate-300">{uploadedDocs.length} document{uploadedDocs.length > 1 ? 's' : ''} uploaded</p>
+              {uploadedDocs.map((item, idx) => (
+                <div key={idx} className="p-4 rounded-2xl bg-navy-900 border border-teal-500/30 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5 text-teal-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-white text-sm truncate">{item.file.name}</h4>
+                    <p className="text-[10px] text-slate-400">{(item.file.size / 1024).toFixed(0)} KB</p>
+                  </div>
+                  <select
+                    value={item.docType}
+                    onChange={(e) => updateDocType(idx, e.target.value)}
+                    className="text-xs bg-navy-950 border border-navy-700 rounded-lg px-2 py-1.5 text-slate-300 focus:outline-none focus:ring-1 focus:ring-gold-500"
+                  >
+                    {DOCUMENT_TYPES.map((dt) => (
+                      <option key={dt.id} value={dt.id}>{dt.label}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => removeUploadedFile(idx)}
+                    className="p-1.5 rounded-lg hover:bg-navy-800 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-slate-400" />
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-white truncate">{uploadedFile.name}</h4>
-                  <p className="text-xs text-slate-400">{(uploadedFile.size / 1024).toFixed(0)} KB • {uploadedFile.name.split('.').pop()?.toUpperCase()}</p>
-                </div>
-                <button
-                  onClick={() => { setUploadedFile(null); setShowPasswordInput(false); setErrors([]); }}
-                  className="p-2 rounded-lg hover:bg-navy-800 transition-colors"
-                >
-                  <X className="w-4 h-4 text-slate-400" />
-                </button>
-              </div>
+              ))}
 
               {showPasswordInput && (
                 <div className="p-4 rounded-xl bg-navy-900 border border-navy-700">
@@ -529,16 +696,19 @@ export function Onboarding({ step, nextStep, profile, setProfile }: OnboardingPr
             onClick={handleUploadContinue}
             className="w-full py-4 bg-white text-navy-950 rounded-xl font-medium hover:bg-slate-100 transition-colors"
           >
-            {uploadedFile ? 'Analyse my finances' : 'Continue without upload'}
+            {uploadedDocs.length > 0 ? `Analyse ${uploadedDocs.length} document${uploadedDocs.length > 1 ? 's' : ''}` : 'Continue without upload'}
           </button>
 
-          {!uploadedFile && (
+          {uploadedDocs.length === 0 && (
             <div className="text-center">
               <button onClick={nextStep} className="text-sm text-slate-500 hover:text-slate-300 underline underline-offset-4">
                 I'll do this later — use demo data
               </button>
             </div>
           )}
+          <button onClick={prevStep} className="w-full py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center justify-center gap-1">
+            <ArrowLeft className="w-3 h-3" /> Back
+          </button>
         </motion.div>
       )}
     </div>

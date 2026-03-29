@@ -16,6 +16,7 @@ import { GoalProfilerAgent } from './GoalProfilerAgent';
 import { InsuranceGapAgent } from './InsuranceGapAgent';
 import { MacroAgent } from './MacroAgent';
 import { MonteCarloAgent } from './MonteCarloAgent';
+import { AdjustedMonteCarloAgent } from './AdjustedMonteCarloAgent';
 import { RoadmapBuilderAgent } from './RoadmapBuilderAgent';
 import { SipGlidepathAgent } from './SipGlidepathAgent';
 
@@ -37,6 +38,9 @@ export class FirePipeline {
       [new MonteCarloAgent(), new SipGlidepathAgent(), new InsuranceGapAgent()],
     );
 
+    // Re-runs Monte Carlo with the required SIP when current SIP yields 0% success
+    const stage2b = new AdjustedMonteCarloAgent();
+
     const stage3 = new RoadmapBuilderAgent();
 
     const stage4 = new LoopAgent<FireSessionState>(
@@ -51,7 +55,7 @@ export class FirePipeline {
       createComplianceExitCondition(),
     );
 
-    this.pipeline = new SequentialAgent<FireSessionState>('FirePipeline', 0, [stage1, stage2, stage3, stage4]);
+    this.pipeline = new SequentialAgent<FireSessionState>('FirePipeline', 0, [stage1, stage2, stage2b, stage3, stage4]);
   }
 
   async execute(input: FireInput): Promise<FireSessionState> {

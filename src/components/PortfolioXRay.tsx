@@ -6,6 +6,8 @@ import type { UserProfile } from '../App';
 import { useAnalysis } from '../contexts/AnalysisContext';
 import { ConfidenceBadge, ConfidenceDot, type ConfidenceLevel } from './ConfidenceBadge';
 import { AgentExecutionLog } from './AgentExecutionLog';
+import { useInfographic } from '../hooks/useInfographic';
+import { InfographicCard } from './InfographicCard';
 
 // Types for the pipeline result
 interface PortfolioResult {
@@ -75,6 +77,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
   const [showExecutionLog, setShowExecutionLog] = useState(false);
   const { portfolioPipeline } = useAnalysis();
   const { execute, events, result, error, isLoading, isComplete, isError, abort } = portfolioPipeline;
+  const infographic = useInfographic();
 
   const buildFundInput = useCallback(() => {
     const mfInvestment = profile.investments.find(i => i.type === 'Mutual Funds');
@@ -102,13 +105,49 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
   }, [profile]);
 
   useEffect(() => {
+    // Don't re-execute if we already have results or are currently loading
+    if (result || isLoading) return;
     const input = buildFundInput();
     execute(input);
-    
-    return () => abort();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
+
+  // ── Data extraction (safe for null result — defaults used) ──
+  const data = (result as PortfolioResult) ?? ({} as PortfolioResult);
+  const xirr = data.xirr_results?.portfolioXirr || 0;
+  const benchmarkReturn = data.benchmark_comparison?.funds?.[0]?.benchmark3Y || 12;
+  const expenseDrag = data.expense_analysis?.totalExpenseDrag || 0;
+  const overlappingStocks = data.overlap_data?.totalOverlappingStocks || 0;
+  const overlapConfidence = data.overlap_data?.confidence || 'HIGH';
+  const totalValue = data.portfolio_data?.totalValue || 0;
+  const fundCount = data.portfolio_data?.funds?.length || 4;
+
+  const handleGenerateInfographic = useCallback(() => {
+    infographic.generate('portfolio', {
+      xirr,
+      benchmarkReturn,
+      expenseDrag,
+      overlappingStocks,
+      totalValue,
+      fundCount,
+    });
+  }, [infographic, xirr, benchmarkReturn, expenseDrag, overlappingStocks, totalValue, fundCount]);
+
+  // Build expense chart data
+  const expenseChartData = data.expense_analysis?.fundExpenses?.map(f => ({
+    name: f.fund.split(' ').slice(0, 2).join(' '),
+    regular: f.regularER ?? 0,
+    direct: f.directER ?? 0,
+  })) ?? [];
+
+  // Build overlap display data
+  const overlapDisplayData = data.overlap_data?.overlapMatrix?.slice(0, 5).map(o => ({
+    stock: o.stock ?? '—',
+    funds: Array.isArray(o.funds) ? o.funds.map(f => (f ?? '').split(' ')[0]) : [],
+    percentage: o.combinedWeight ?? 0,
+    confidence: o.confidence ?? 'MEDIUM',
+  })) ?? [];
 
   // Show loading state with real agent events
   if (isLoading) {
@@ -145,11 +184,35 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
   }
 
   if (isError) {
+    const isNetworkError = error?.toLowerCase().includes('failed to fetch') || error?.toLowerCase().includes('networkerror');
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <WifiOff className="w-12 h-12 text-coral-500" />
         <h3 className="text-xl font-semibold text-white">Analysis Failed</h3>
-        <p className="text-slate-400 text-center max-w-md">{error || 'An error occurred during portfolio analysis.'}</p>
+        <p className="text-slate-400 text-center max-w-md">
+          {isNetworkError
+            ? 'Could not connect to the server. Please make sure the dev server is running (npm run dev) and try again.'
+            : (error || 'An error occurred during portfolio analysis.')}
+        </p>
+        <button
+          onClick={() => execute(buildFundInput())}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-navy-950 font-semibold hover:bg-gold-400 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Retry Analysis
+        </button>
+      </div>
+    );
+  }
+
+  if (isComplete && !result) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
+        <AlertTriangle className="w-12 h-12 text-coral-500" />
+        <h3 className="text-xl font-semibold text-white">No Portfolio Data Returned</h3>
+        <p className="text-slate-400 text-center max-w-md">
+          The pipeline completed but did not return a result payload. This can happen due to a slow network or timeout. Please retry.
+        </p>
         <button
           onClick={() => execute(buildFundInput())}
           className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-navy-950 font-semibold hover:bg-gold-400 transition-colors"
@@ -162,28 +225,6 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
   }
 
   if (!isComplete || !result) return null;
-
-  const data = result as PortfolioResult;
-  const xirr = data.xirr_results?.portfolioXirr || 0;
-  const benchmarkReturn = data.benchmark_comparison?.funds?.[0]?.benchmark3Y || 12;
-  const expenseDrag = data.expense_analysis?.totalExpenseDrag || 0;
-  const overlappingStocks = data.overlap_data?.totalOverlappingStocks || 0;
-  const overlapConfidence = data.overlap_data?.confidence || 'HIGH';
-
-  // Build expense chart data
-  const expenseChartData = data.expense_analysis?.fundExpenses?.map(f => ({
-    name: f.fund.split(' ').slice(0, 2).join(' '),
-    regular: f.regularER,
-    direct: f.directER,
-  })) || [];
-
-  // Build overlap display data
-  const overlapDisplayData = data.overlap_data?.overlapMatrix?.slice(0, 5).map(o => ({
-    stock: o.stock,
-    funds: o.funds.map(f => f.split(' ')[0]),
-    percentage: o.combinedWeight,
-    confidence: o.confidence,
-  })) || [];
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -392,6 +433,16 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
           )}
         </div>
       )}
+
+      {/* ── Nano Banana 2 Infographic ── */}
+      <InfographicCard
+        image={infographic.image}
+        isLoading={infographic.isLoading}
+        error={infographic.error}
+        onGenerate={handleGenerateInfographic}
+        onReset={infographic.reset}
+        label="Portfolio X-Ray Summary"
+      />
 
       {/* Execution Log Accordion */}
       <div className="border border-navy-800 rounded-xl overflow-hidden">

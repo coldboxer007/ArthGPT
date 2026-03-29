@@ -199,18 +199,13 @@ async function consumeStream<T>(options: {
   const decoder = new TextDecoder();
   let buffer = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-
+  const processLines = (lines: string[]) => {
     for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
+      // Strip carriage returns from CRLF line endings
+      const trimmedLine = line.replace(/\r$/, '');
+      if (!trimmedLine.startsWith('data: ')) continue;
 
-      const data = line.slice(6).trim();
+      const data = trimmedLine.slice(6).trim();
       if (!data) continue;
 
       try {
@@ -220,6 +215,23 @@ async function consumeStream<T>(options: {
         console.warn('Failed to parse SSE data:', data);
       }
     }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+
+    if (done) {
+      // Flush any remaining buffered data when stream ends
+      if (buffer.trim()) {
+        processLines(buffer.split('\n'));
+      }
+      break;
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    processLines(lines);
   }
 }
 
