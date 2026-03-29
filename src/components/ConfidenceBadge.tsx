@@ -18,9 +18,9 @@ export function ConfidenceBadge({ level, showLabel = true, size = 'sm' }: Confid
   const config = {
     HIGH: {
       icon: CheckCircle2,
-      bg: 'bg-emerald-500/10',
-      border: 'border-emerald-500/30',
-      text: 'text-emerald-500',
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/30',
+      text: 'text-amber-500',
       label: 'High Confidence',
       tooltip: 'Data from official AMFI factsheets',
     },
@@ -67,7 +67,7 @@ export function ConfidenceBadge({ level, showLabel = true, size = 'sm' }: Confid
  */
 export function ConfidenceDot({ level }: { level: ConfidenceLevel }) {
   const colors = {
-    HIGH: 'bg-emerald-500',
+    HIGH: 'bg-amber-500',
     MEDIUM: 'bg-amber-500',
     LOW: 'bg-coral-500',
   };

@@ -40,7 +40,7 @@ export function InfographicCard({ image, isLoading, error, onGenerate, onReset, 
           'flex items-center gap-4 group'
         )}
       >
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-500/20 to-teal-500/10 flex items-center justify-center shrink-0 group-hover:from-gold-500/30 group-hover:to-teal-500/20 transition-colors">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-500/20 to-amber-500/10 flex items-center justify-center shrink-0 group-hover:from-gold-500/30 group-hover:to-amber-500/20 transition-colors">
           <Sparkles className="w-5 h-5 text-gold-500" />
         </div>
         <div className="text-left flex-1">
@@ -59,11 +59,11 @@ export function InfographicCard({ image, isLoading, error, onGenerate, onReset, 
     return (
       <div className="w-full p-6 rounded-2xl bg-navy-900/60 border border-navy-700 flex flex-col items-center justify-center gap-4">
         <div className="relative">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gold-500/20 to-teal-500/10 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gold-500/20 to-amber-500/10 flex items-center justify-center">
             <Loader2 className="w-7 h-7 text-gold-500 animate-spin" />
           </div>
           <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-navy-800 border border-navy-700 flex items-center justify-center">
-            <Sparkles className="w-3 h-3 text-teal-500" />
+            <Sparkles className="w-3 h-3 text-amber-500" />
           </div>
         </div>
         <div className="text-center">
@@ -72,7 +72,7 @@ export function InfographicCard({ image, isLoading, error, onGenerate, onReset, 
         </div>
         {/* shimmer bar */}
         <div className="w-48 h-1 rounded-full bg-navy-800 overflow-hidden">
-          <div className="h-full w-1/3 bg-gradient-to-r from-gold-500 to-teal-500 rounded-full animate-[shimmer_1.5s_ease-in-out_infinite]" />
+          <div className="h-full w-1/3 bg-gradient-to-r from-gold-500 to-amber-500 rounded-full animate-[shimmer_1.5s_ease-in-out_infinite]" />
         </div>
       </div>
     );
@@ -116,7 +116,7 @@ export function InfographicCard({ image, isLoading, error, onGenerate, onReset, 
               <span className="text-[10px] text-slate-600 font-mono">• Nano Banana 2</span>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={handleDownload} className="p-1.5 rounded-lg hover:bg-navy-800 text-slate-500 hover:text-teal-500 transition-colors" title="Download">
+              <button onClick={handleDownload} className="p-1.5 rounded-lg hover:bg-navy-800 text-slate-500 hover:text-amber-500 transition-colors" title="Download">
                 <Download className="w-3.5 h-3.5" />
               </button>
               <button onClick={onGenerate} className="p-1.5 rounded-lg hover:bg-navy-800 text-slate-500 hover:text-gold-500 transition-colors" title="Regenerate">

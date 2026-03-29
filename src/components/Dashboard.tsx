@@ -87,8 +87,8 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
       <aside className="w-full md:w-64 bg-[#141414] border-r border-[#2a2a2a] flex flex-col shrink-0 overflow-y-auto shadow-2xl z-10">
         <div className="p-6">
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <img src="/logo1.png" alt="ChanakAI Logo" className="w-10 h-10 object-cover rounded-full shadow-[0_0_15px_rgba(0,229,255,0.4)]" />
-            <span className="bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">ChanakAI</span>
+            <img src="/logo1.png" alt="ChanakAI Logo" className="w-10 h-10 object-cover rounded-full shadow-[0_0_15px_rgba(212,175,55,0.4)]" />
+            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">ChanakAI</span>
           </h1>
         </div>
 
@@ -97,8 +97,8 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
           {profile.city && (
             <div className="mb-4 p-3 bg-[#0a0a0a]/50 rounded-xl border border-[#2a2a2a] backdrop-blur-sm">
               <div className="flex items-center gap-2 mb-2">
-                <User className="w-4 h-4 text-teal-400" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-teal-400">Profile</span>
+                <User className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">Profile</span>
               </div>
               <p className="text-sm text-white font-medium">{profile.city}, Age {profile.age}</p>
               <p className="text-xs text-slate-400">Income: ₹{(profile.income / 100000).toFixed(0)}L/yr</p>
@@ -112,49 +112,49 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
             onClick={() => setActiveTab('portfolio')}
             className={cn(
               "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-              activeTab === 'portfolio' ? "bg-[#1f1f1f] text-teal-400 shadow-md border border-[#333]" : "text-slate-400 hover:text-slate-200 hover:bg-[#1a1a1a]"
+              activeTab === 'portfolio' ? "bg-[#1f1f1f] text-amber-400 shadow-md border border-[#333]" : "text-slate-400 hover:text-slate-200 hover:bg-[#1a1a1a]"
             )}
           >
             <PieChart className="w-5 h-5" />
             <span className="font-medium flex-1 text-left">Portfolio X-Ray</span>
-            {portfolioDocs > 0 && <span className="text-[10px] bg-teal-500/20 text-teal-400 px-1.5 py-0.5 rounded-full font-mono">{portfolioDocs} doc{portfolioDocs > 1 ? 's' : ''}</span>}
+            {portfolioDocs > 0 && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full font-mono">{portfolioDocs} doc{portfolioDocs > 1 ? 's' : ''}</span>}
           </button>
           
           <button
             onClick={() => setActiveTab('fire')}
             className={cn(
               "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-              activeTab === 'fire' ? "bg-[#1f1f1f] text-teal-400 shadow-md border border-[#333]" : "text-slate-400 hover:text-slate-200 hover:bg-[#1a1a1a]"
+              activeTab === 'fire' ? "bg-[#1f1f1f] text-amber-400 shadow-md border border-[#333]" : "text-slate-400 hover:text-slate-200 hover:bg-[#1a1a1a]"
             )}
           >
             <Flame className="w-5 h-5" />
             <span className="font-medium flex-1 text-left">FIRE Roadmap</span>
-            {fireDocs > 0 && <span className="text-[10px] bg-teal-500/20 text-teal-400 px-1.5 py-0.5 rounded-full font-mono">{fireDocs} doc{fireDocs > 1 ? 's' : ''}</span>}
+            {fireDocs > 0 && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full font-mono">{fireDocs} doc{fireDocs > 1 ? 's' : ''}</span>}
           </button>
 
           <button
             onClick={() => setActiveTab('tax')}
             className={cn(
               "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-              activeTab === 'tax' ? "bg-[#1f1f1f] text-teal-400 shadow-md border border-[#333]" : "text-slate-400 hover:text-slate-200 hover:bg-[#1a1a1a]"
+              activeTab === 'tax' ? "bg-[#1f1f1f] text-amber-400 shadow-md border border-[#333]" : "text-slate-400 hover:text-slate-200 hover:bg-[#1a1a1a]"
             )}
           >
             <Calculator className="w-5 h-5" />
             <span className="font-medium flex-1 text-left">Tax Wizard</span>
-            {taxDocs > 0 && <span className="text-[10px] bg-teal-500/20 text-teal-400 px-1.5 py-0.5 rounded-full font-mono">{taxDocs} doc{taxDocs > 1 ? 's' : ''}</span>}
+            {taxDocs > 0 && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full font-mono">{taxDocs} doc{taxDocs > 1 ? 's' : ''}</span>}
           </button>
 
           {/* Uploaded Documents Summary in Sidebar */}
           {uploadedDocs.length > 0 && (
             <div className="mt-4 p-3 bg-[#0a0a0a]/50 rounded-xl border border-[#2a2a2a] backdrop-blur-sm">
               <div className="flex items-center gap-2 mb-2">
-                <FileText className="w-4 h-4 text-teal-400" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-teal-400">Documents</span>
+                <FileText className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">Documents</span>
               </div>
               {uploadedDocs.map((doc, i) => (
                 <div key={i} className="flex items-center gap-1.5 mb-1 last:mb-0">
                   {doc.parseStatus === 'done' && doc.parsedData ? (
-                    <CheckCircle2 className="w-3 h-3 text-teal-500 shrink-0" />
+                    <CheckCircle2 className="w-3 h-3 text-amber-500 shrink-0" />
                   ) : doc.parseStatus === 'error' ? (
                     <AlertTriangle className="w-3 h-3 text-red-500 shrink-0" />
                   ) : (
@@ -164,7 +164,7 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
                     {doc.file.name.length > 20 ? doc.file.name.slice(0, 20) + '…' : doc.file.name}
                   </p>
                   {doc.parseStatus === 'done' && doc.parsedData && (
-                    <span className="text-[9px] text-teal-500 font-mono shrink-0">{Math.round(doc.parsedData.confidence * 100)}%</span>
+                    <span className="text-[9px] text-amber-500 font-mono shrink-0">{Math.round(doc.parsedData.confidence * 100)}%</span>
                   )}
                   {!doc.parseStatus && <span className="text-[9px] text-slate-600 shrink-0">pending</span>}
                 </div>
@@ -177,14 +177,14 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
           {onStartOver && (
             <button
               onClick={onStartOver}
-              className="w-full py-2.5 text-sm font-medium text-slate-400 hover:text-white border border-[#2a2a2a] hover:border-teal-500/50 rounded-xl transition-colors"
+              className="w-full py-2.5 text-sm font-medium text-slate-400 hover:text-white border border-[#2a2a2a] hover:border-amber-500/50 rounded-xl transition-colors"
             >
               ← Start Over
             </button>
           )}
           <div className="p-4 bg-[#1a1a1a] rounded-xl border border-[#333] space-y-3">
             <div className="flex items-center gap-2 text-slate-300">
-              <ShieldAlert className="w-4 h-4 text-teal-400" />
+              <ShieldAlert className="w-4 h-4 text-amber-400" />
               <span className="text-xs font-medium uppercase tracking-wider">Compliance</span>
             </div>
             <p className="text-[10px] text-slate-500 leading-relaxed">
@@ -200,13 +200,13 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
           
           {/* Document Data Available banner */}
           {(parsedCas || parsedForm16 || parsedPayslip) && (
-            <div className="mb-6 p-4 bg-teal-500/10 border border-teal-500/20 rounded-2xl space-y-2 backdrop-blur-md">
+            <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl space-y-2 backdrop-blur-md">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-teal-400" />
-                <span className="text-sm font-semibold text-teal-400">Extracted Document Data Available</span>
+                <FileText className="w-5 h-5 text-amber-400" />
+                <span className="text-sm font-semibold text-amber-400">Extracted Document Data Available</span>
                 <button
                   onClick={() => setShowExtractedData(!showExtractedData)}
-                  className="ml-auto text-xs text-teal-200 hover:text-white transition-colors bg-teal-500/20 px-3 py-1 rounded-full"
+                  className="ml-auto text-xs text-amber-200 hover:text-white transition-colors bg-amber-500/20 px-3 py-1 rounded-full"
                 >
                   {showExtractedData ? 'Hide details' : 'View extracted data'}
                 </button>
@@ -214,21 +214,21 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
               <div className="space-y-1">
                 {parsedCas && (
                   <p className="text-xs text-slate-300">
-                    <CheckCircle2 className="w-3 h-3 text-teal-400 inline mr-1" />
+                    <CheckCircle2 className="w-3 h-3 text-amber-400 inline mr-1" />
                     CAMS statement parsed — Portfolio X-Ray will use this data
                     {parsedCas.confidence < 0.5 && <span className="text-amber-400 ml-2">(low confidence)</span>}
                   </p>
                 )}
                 {parsedForm16 && (
                   <p className="text-xs text-slate-300">
-                    <CheckCircle2 className="w-3 h-3 text-teal-400 inline mr-1" />
+                    <CheckCircle2 className="w-3 h-3 text-amber-400 inline mr-1" />
                     Form 16 parsed — Tax Wizard profile auto-populated
                     {parsedForm16.confidence < 0.5 && <span className="text-amber-400 ml-2">(low confidence)</span>}
                   </p>
                 )}
                 {parsedPayslip && (
                   <p className="text-xs text-slate-300">
-                    <CheckCircle2 className="w-3 h-3 text-teal-400 inline mr-1" />
+                    <CheckCircle2 className="w-3 h-3 text-amber-400 inline mr-1" />
                     Payslip parsed — salary data available
                     {parsedPayslip.confidence < 0.5 && <span className="text-amber-400 ml-2">(low confidence)</span>}
                   </p>
@@ -238,13 +238,13 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className="pt-3 border-t border-teal-500/20 space-y-3 text-xs"
+                  className="pt-3 border-t border-amber-500/20 space-y-3 text-xs"
                 >
                   {parsedCas && (() => {
                     const data = parsedCas.data as { investorName?: string; funds?: { fundName: string; currentValue: number }[] };
                     return (
                       <div>
-                        <p className="text-teal-200 font-medium mb-1">CAS — {data.investorName || 'Unknown'}</p>
+                        <p className="text-amber-200 font-medium mb-1">CAS — {data.investorName || 'Unknown'}</p>
                         {data.funds && data.funds.slice(0, 3).map((f, i) => (
                           <p key={i} className="text-[10px] text-slate-400 pl-3">{f.fundName}: ₹{new Intl.NumberFormat('en-IN').format(f.currentValue)}</p>
                         ))}
@@ -256,7 +256,7 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
                     const data = parsedForm16.data as { grossSalary?: number; taxDeducted?: number; assessmentYear?: string };
                     return (
                       <div>
-                        <p className="text-teal-200 font-medium mb-1">Form 16 — AY {data.assessmentYear || '—'}</p>
+                        <p className="text-amber-200 font-medium mb-1">Form 16 — AY {data.assessmentYear || '—'}</p>
                         <p className="text-[10px] text-slate-400 pl-3">Gross Salary: ₹{data.grossSalary ? new Intl.NumberFormat('en-IN').format(data.grossSalary) : '—'}</p>
                         <p className="text-[10px] text-slate-400 pl-3">TDS: ₹{data.taxDeducted ? new Intl.NumberFormat('en-IN').format(data.taxDeducted) : '—'}</p>
                       </div>
@@ -266,7 +266,7 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
                     const data = parsedPayslip.data as { month?: string; netSalary?: number };
                     return (
                       <div>
-                        <p className="text-teal-200 font-medium mb-1">Payslip — {data.month || '—'}</p>
+                        <p className="text-amber-200 font-medium mb-1">Payslip — {data.month || '—'}</p>
                         <p className="text-[10px] text-slate-400 pl-3">Net Salary: ₹{data.netSalary ? new Intl.NumberFormat('en-IN').format(data.netSalary) : '—'}</p>
                       </div>
                     );
@@ -329,7 +329,7 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
               className="w-full flex items-center justify-between p-5 hover:bg-[#1a1a1a] transition-colors"
             >
               <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-teal-400" />
+                <FileText className="w-5 h-5 text-amber-400" />
                 <span className="font-semibold text-white">How we calculated this — Audit Trail</span>
                 {auditEntries.length > 0 && (
                   <span className="text-xs text-slate-400 font-mono bg-[#0a0a0a] border border-[#2a2a2a] px-2 py-0.5 rounded-full shadow-inner">
@@ -337,7 +337,7 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
                   </span>
                 )}
               </div>
-              {auditOpen ? <ChevronUp className="w-5 h-5 text-teal-500" /> : <ChevronDown className="w-5 h-5 text-teal-500" />}
+              {auditOpen ? <ChevronUp className="w-5 h-5 text-amber-500" /> : <ChevronDown className="w-5 h-5 text-amber-500" />}
             </button>
             <AnimatePresence>
               {auditOpen && (
@@ -350,13 +350,13 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
                   {auditEntries.length > 0 ? (
                     <div className="space-y-3 font-mono text-xs">
                       {auditEntries.map((log, i) => (
-                        <div key={i} className="flex items-start gap-4 p-3 rounded-xl bg-[#141414] border border-[#2a2a2a] shadow-sm hover:border-teal-500/30 transition-colors">
+                        <div key={i} className="flex items-start gap-4 p-3 rounded-xl bg-[#141414] border border-[#2a2a2a] shadow-sm hover:border-amber-500/30 transition-colors">
                           <span className="text-slate-500 shrink-0 w-16 text-right">{log.latency}</span>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <span className="text-white font-semibold">{log.agent}</span>
                               <span className="text-slate-600">•</span>
-                              <span className="text-teal-400">{log.model}</span>
+                              <span className="text-amber-400">{log.model}</span>
                               <span className={cn(
                                 "text-[9px] px-2 py-0.5 rounded-full font-medium tracking-wide",
                                 log.pipeline === 'Portfolio' ? 'bg-blue-500/20 text-blue-300' :
@@ -385,7 +385,7 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
                       <div className="flex flex-wrap gap-2">
                         {uploadedDocs.map((doc, i) => (
                           <span key={i} className="text-[10px] px-3 py-1.5 rounded-lg bg-[#141414] border border-[#2a2a2a] text-slate-300 font-mono shadow-sm">
-                            {doc.file.name} <span className="text-teal-500 mx-1">→</span> {doc.docType}
+                            {doc.file.name} <span className="text-amber-500 mx-1">→</span> {doc.docType}
                           </span>
                         ))}
                       </div>
@@ -399,8 +399,8 @@ export function Dashboard({ profile, setProfile, uploadedDocs = [], onStartOver 
           {/* Full SEBI Compliance Disclaimer */}
           <div className="mt-8 p-6 rounded-2xl bg-[#141414] border border-[#2a2a2a] shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <ShieldAlert className="w-5 h-5 text-teal-500" />
-              <span className="text-xs font-bold uppercase tracking-widest text-teal-500">Mandatory Compliance Disclaimer</span>
+              <ShieldAlert className="w-5 h-5 text-amber-500" />
+              <span className="text-xs font-bold uppercase tracking-widest text-amber-500">Mandatory Compliance Disclaimer</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed text-justify">
               {SEBI_DISCLAIMER}

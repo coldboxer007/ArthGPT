@@ -48,7 +48,7 @@ export function AgentExecutionLog({ events, isLoading = false }: AgentExecutionL
   // Get agent type label
   const getAgentType = (agent: string): { type: string; icon: React.ElementType; color: string } => {
     if (agent.includes('Regime')) {
-      return { type: 'Deterministic', icon: Cpu, color: 'teal' };
+      return { type: 'Deterministic', icon: Cpu, color: 'amber' };
     }
     if (agent.includes('Collector') || agent.includes('Checker') || agent.includes('Injector')) {
       return { type: 'LLM (Flash)', icon: Zap, color: 'blue' };
@@ -195,8 +195,8 @@ export function AgentExecutionLog({ events, isLoading = false }: AgentExecutionL
 
               {/* Parallelism Note */}
               {agentGroups.has('OldRegimeCalc') && agentGroups.has('NewRegimeCalc') && (
-                <div className="mt-4 p-3 rounded-lg bg-teal-500/10 border border-teal-500/20">
-                  <p className="text-xs text-teal-400">
+                <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-xs text-amber-400">
                     <strong>Parallelism Detected:</strong> OldRegimeCalc and NewRegimeCalc ran concurrently via ParallelAgent, 
                     reducing total computation time.
                   </p>

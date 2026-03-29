@@ -45,7 +45,7 @@ function getRiskTier(pct: number) {
   if (pct < 50) return { label: 'High Risk', color: '#FF6B6B', tailwindText: 'text-coral-500', tailwindBg: 'bg-coral-500' };
   if (pct < 70) return { label: 'Moderate Risk', color: '#F59E0B', tailwindText: 'text-orange-400', tailwindBg: 'bg-orange-400' };
   if (pct < 85) return { label: 'Moderate', color: '#FBBF24', tailwindText: 'text-yellow-400', tailwindBg: 'bg-yellow-400' };
-  return { label: 'On Track', color: '#34D399', tailwindText: 'text-emerald-400', tailwindBg: 'bg-emerald-400' };
+  return { label: 'On Track', color: '#fbbf24', tailwindText: 'text-amber-400', tailwindBg: 'bg-amber-400' };
 }
 
 /** Semi-circular gauge rendered with SVG. Animated via a clip-path trick + CSS transition. */
@@ -98,7 +98,7 @@ function ProbabilityGauge({ percentage, isLoading }: { percentage: number; isLoa
               <stop offset="0%" stopColor="#FF6B6B" />
               <stop offset="40%" stopColor="#F59E0B" />
               <stop offset="65%" stopColor="#FBBF24" />
-              <stop offset="85%" stopColor="#34D399" />
+              <stop offset="85%" stopColor="#fbbf24" />
             </linearGradient>
           </defs>
 
@@ -182,7 +182,7 @@ function DeltaBadge({
     <span
       className={`inline-flex items-center gap-0.5 text-xs font-mono px-1.5 py-0.5 rounded-md ${
         isPositive
-          ? 'text-emerald-400 bg-emerald-400/10'
+          ? 'text-amber-400 bg-amber-400/10'
           : 'text-coral-500 bg-coral-500/10'
       }`}
     >
@@ -376,7 +376,7 @@ export function WhatIfPanel({
                     <span
                       className={`inline-flex items-center gap-1.5 text-sm font-mono px-3 py-1 rounded-full ${
                         deltaPP >= 0
-                          ? 'text-emerald-400 bg-emerald-400/10'
+                          ? 'text-amber-400 bg-amber-400/10'
                           : 'text-coral-500 bg-coral-500/10'
                       }`}
                     >

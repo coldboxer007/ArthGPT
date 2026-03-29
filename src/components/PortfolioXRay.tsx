@@ -167,7 +167,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-6">
-        <Loader2 className="w-8 h-8 text-teal-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
         <p className="text-slate-400 text-sm">Executing Portfolio X-Ray pipeline...</p>
         
         <div className="w-full max-w-md space-y-2">
@@ -180,11 +180,11 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
                 <span className="text-sm text-slate-300">{agent}</span>
                 {completeEvent ? (
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
                     <span className="text-xs text-slate-500">{completeEvent.latencyMs}ms</span>
                   </div>
                 ) : startEvent ? (
-                  <Loader2 className="w-4 h-4 text-teal-400 animate-spin" />
+                  <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
                 ) : (
                   <div className="w-4 h-4 rounded-full bg-[#2a2a2a]" />
                 )}
@@ -209,7 +209,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
         </p>
         <button
           onClick={() => execute(buildFundInput())}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 text-[#0a0a0a] font-semibold hover:bg-teal-400 transition-colors"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold hover:bg-amber-400 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Retry Analysis
@@ -228,7 +228,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
         </p>
         <button
           onClick={() => execute(buildFundInput())}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 text-[#0a0a0a] font-semibold hover:bg-teal-400 transition-colors"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold hover:bg-amber-400 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Retry Analysis
@@ -249,7 +249,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
         <div className="flex items-center gap-3">
           <ConfidenceBadge level={overlapConfidence} />
           <div className="px-4 py-2 bg-[#141414] rounded-full border border-[#2a2a2a] flex items-center gap-2 self-start">
-            <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             <span className="text-sm font-medium text-slate-300">V2 Pipeline</span>
           </div>
         </div>
@@ -275,11 +275,11 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
             </div>
             <div className="mt-4 flex items-center gap-1.5">
               {metric.positive ? (
-                <ArrowUpRight className="w-4 h-4 text-teal-400" />
+                <ArrowUpRight className="w-4 h-4 text-amber-400" />
               ) : (
                 <ArrowDownRight className="w-4 h-4 text-red-400" />
               )}
-              <span className={`text-sm font-medium ${metric.positive ? 'text-teal-400' : 'text-red-400'}`}>
+              <span className={`text-sm font-medium ${metric.positive ? 'text-amber-400' : 'text-red-400'}`}>
                 {metric.trend}
               </span>
             </div>
@@ -299,9 +299,9 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
           </div>
 
           {!hasTaxData && (
-            <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-3 flex items-center gap-2 shadow-sm">
-              <Info className="w-4 h-4 text-teal-400 shrink-0" />
-              <span className="text-teal-200 text-xs">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center gap-2 shadow-sm">
+              <Info className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="text-amber-200 text-xs">
                 Run Tax Wizard to see post-tax returns
               </span>
             </div>
@@ -322,7 +322,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
                   <p className="text-sm text-slate-300 mb-2 truncate font-medium" title={f.fund}>{f.fund}</p>
                   <div className="flex items-center justify-between flex-wrap">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xl font-bold font-mono ${isPositive ? 'text-teal-400' : 'text-red-400'}`}>
+                      <span className={`text-xl font-bold font-mono ${isPositive ? 'text-amber-400' : 'text-red-400'}`}>
                         {f.xirr.toFixed(1)}%
                       </span>
                       <span className="text-xs text-slate-500">XIRR</span>
@@ -331,7 +331,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                           postTax >= 0
-                            ? 'bg-teal-500/10 text-teal-400'
+                            ? 'bg-amber-500/10 text-amber-400'
                             : 'bg-red-500/10 text-red-400'
                         }`}
                       >
@@ -376,7 +376,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
                   <tr key={i} className="border-b border-[#2a2a2a] last:border-0 hover:bg-[#1a1a1a]">
                     <td className="px-4 py-4 font-medium text-slate-200">{row.stock}</td>
                     <td className="px-4 py-4 text-slate-400">{row.funds.join(', ')}</td>
-                    <td className="px-4 py-4 text-teal-400 font-mono">{row.percentage.toFixed(1)}%</td>
+                    <td className="px-4 py-4 text-amber-400 font-mono">{row.percentage.toFixed(1)}%</td>
                     <td className="px-4 py-4"><ConfidenceDot level={row.confidence} /></td>
                   </tr>
                 ))}
@@ -447,7 +447,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
                       </div>
                       <div className="flex justify-between border-b border-[#2a2a2a] pb-3">
                         <span className="text-slate-500">Tax Implication</span>
-                        <span className={`font-medium ${plan.taxImplication === 'No Tax' ? 'text-teal-400' : 'text-amber-500'}`}>
+                        <span className={`font-medium ${plan.taxImplication === 'No Tax' ? 'text-amber-400' : 'text-amber-500'}`}>
                           {plan.taxImplication} ({formatCurrency(plan.estimatedTax)})
                         </span>
                       </div>
@@ -459,13 +459,13 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 + 0.05 }}
-                  className="p-6 rounded-2xl bg-[#141414] border border-teal-500/30 relative overflow-hidden group shadow-sm"
+                  className="p-6 rounded-2xl bg-[#141414] border border-amber-500/30 relative overflow-hidden group shadow-sm"
                 >
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <CheckCircle2 className="w-24 h-24 text-teal-500" />
+                    <CheckCircle2 className="w-24 h-24 text-amber-500" />
                   </div>
                   <div className="relative z-10">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 text-xs font-bold uppercase tracking-wider mb-4">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 text-xs font-bold uppercase tracking-wider mb-4">
                       Invest
                     </div>
                     <h4 className="text-lg font-semibold text-white mb-2">{plan.fundToInvest}</h4>
@@ -478,7 +478,7 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
                       </div>
                       <div className="flex justify-between border-b border-[#2a2a2a] pb-3">
                         <span className="text-slate-500">Expense Benefit</span>
-                        <span className="text-teal-400 font-medium">{plan.expenseBenefit}</span>
+                        <span className="text-amber-400 font-medium">{plan.expenseBenefit}</span>
                       </div>
                     </div>
                   </div>
@@ -494,10 +494,10 @@ export function PortfolioXRay({ profile }: { profile: UserProfile }) {
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#00e5ff]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-                <span className="text-teal-400 font-bold text-sm tracking-wide">AI</span>
+              <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <span className="text-amber-400 font-bold text-sm tracking-wide">AI</span>
               </div>
-              <h3 className="text-xl font-semibold text-teal-400 tracking-wide">ChanakAI Insight</h3>
+              <h3 className="text-xl font-semibold text-amber-400 tracking-wide">ChanakAI Insight</h3>
             </div>
             <div className="space-y-4 text-slate-300 leading-relaxed text-sm">
               <p>{data.rebalancing_plan.narrative}</p>

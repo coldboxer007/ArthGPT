@@ -71,7 +71,7 @@ const PERSONAS: Persona[] = [
     label: 'Student / Intern',
     tagline: '22 · Bengaluru · 4.5L',
     icon: GraduationCap,
-    color: 'teal',
+    color: 'amber',
     profile: {
       age: 22, city: 'Bengaluru', income: 450000,
       retireAge: 45, targetMonthlyExpense: 30000, monthlySipCurrent: 5000,
@@ -763,7 +763,7 @@ export function Onboarding({ step, nextStep, prevStep, profile, setProfile, uplo
               <p className="text-xs text-coral-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Retirement age must be greater than your current age ({profile.age}).</p>
             )}
             {profile.retireAge > 0 && profile.age > 0 && profile.retireAge > profile.age && (
-              <p className="text-[10px] text-teal-500 mt-1">
+              <p className="text-[10px] text-amber-500 mt-1">
                 🎯 {profile.retireAge - profile.age} years to FIRE — {profile.targetMonthlyExpense > 0 ? `targeting ₹${formatIndianNumber(profile.targetMonthlyExpense)}/mo` : "we\u2019ll estimate your expenses"}
               </p>
             )}
@@ -822,7 +822,7 @@ export function Onboarding({ step, nextStep, prevStep, profile, setProfile, uplo
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-medium text-white text-sm">{doc.label}</h4>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 font-medium">{doc.module}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 font-medium">{doc.module}</span>
                         <span className="text-[10px] text-slate-600">{doc.formats}</span>
                       </div>
                       <p className="text-xs text-slate-400 mt-1">{doc.desc}</p>
@@ -878,22 +878,22 @@ export function Onboarding({ step, nextStep, prevStep, profile, setProfile, uplo
               {uploadedDocs.map((item, idx) => {
                 const isParsable = mapToBackendType(item.docType) !== null;
                 return (
-                <div key={idx} className="rounded-2xl bg-navy-900 border border-teal-500/30 overflow-hidden">
+                <div key={idx} className="rounded-2xl bg-navy-900 border border-amber-500/30 overflow-hidden">
                   <div className="p-4 flex items-center gap-3">
                     <div className={cn(
                       "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                      item.parseStatus === 'done' ? "bg-teal-500/10" :
+                      item.parseStatus === 'done' ? "bg-amber-500/10" :
                       item.parseStatus === 'error' ? "bg-coral-500/10" :
-                      "bg-teal-500/10"
+                      "bg-amber-500/10"
                     )}>
                       {(item.parseStatus === 'uploading' || item.parseStatus === 'parsing') ? (
                         <Loader2 className="w-5 h-5 text-gold-500 animate-spin" />
                       ) : item.parseStatus === 'done' ? (
-                        <CheckCircle2 className="w-5 h-5 text-teal-500" />
+                        <CheckCircle2 className="w-5 h-5 text-amber-500" />
                       ) : item.parseStatus === 'error' ? (
                         <AlertCircle className="w-5 h-5 text-coral-500" />
                       ) : (
-                        <FileText className="w-5 h-5 text-teal-500" />
+                        <FileText className="w-5 h-5 text-amber-500" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -903,7 +903,7 @@ export function Onboarding({ step, nextStep, prevStep, profile, setProfile, uplo
                         {item.parseStatus === 'uploading' && <p className="text-[10px] text-gold-500">Uploading...</p>}
                         {item.parseStatus === 'parsing' && <p className="text-[10px] text-gold-500">AI parsing...</p>}
                         {item.parseStatus === 'done' && item.parsedData && (
-                          <p className="text-[10px] text-teal-500">Parsed ({Math.round(item.parsedData.confidence * 100)}% confidence)</p>
+                          <p className="text-[10px] text-amber-500">Parsed ({Math.round(item.parsedData.confidence * 100)}% confidence)</p>
                         )}
                         {item.parseStatus === 'error' && <p className="text-[10px] text-coral-500">{item.parseError || 'Failed'}</p>}
                         {!isParsable && !item.parseStatus && (
@@ -960,7 +960,7 @@ export function Onboarding({ step, nextStep, prevStep, profile, setProfile, uplo
                               <span className="text-slate-500">Investor:</span> {data.investorName || '—'}
                               {data.pan && <span className="text-slate-500 ml-3">PAN: {data.pan}</span>}
                             </p>
-                            <p className="text-teal-400 font-medium">Found {data.funds?.length || 0} fund{(data.funds?.length || 0) !== 1 ? 's' : ''}</p>
+                            <p className="text-amber-400 font-medium">Found {data.funds?.length || 0} fund{(data.funds?.length || 0) !== 1 ? 's' : ''}</p>
                             {data.funds && data.funds.length > 0 && (
                               <div className="space-y-1 max-h-32 overflow-y-auto">
                                 {data.funds.slice(0, 5).map((f, fi) => (
@@ -985,7 +985,7 @@ export function Onboarding({ step, nextStep, prevStep, profile, setProfile, uplo
                             {data.assessmentYear && <p className="text-slate-300"><span className="text-slate-500">AY:</span> {data.assessmentYear}</p>}
                             <div className="flex gap-4 mt-1">
                               {data.grossSalary !== undefined && (
-                                <p className="text-teal-400 font-medium">Gross Salary: ₹{formatIndianNumber(data.grossSalary)}</p>
+                                <p className="text-amber-400 font-medium">Gross Salary: ₹{formatIndianNumber(data.grossSalary)}</p>
                               )}
                               {data.taxDeducted !== undefined && (
                                 <p className="text-gold-500 font-medium">TDS: ₹{formatIndianNumber(data.taxDeducted)}</p>
@@ -1001,7 +1001,7 @@ export function Onboarding({ step, nextStep, prevStep, profile, setProfile, uplo
                             {data.month && <p className="text-slate-300"><span className="text-slate-500">Month:</span> {data.month}</p>}
                             <div className="flex gap-4 mt-1">
                               {data.netSalary !== undefined && (
-                                <p className="text-teal-400 font-medium">Net Salary: ₹{formatIndianNumber(data.netSalary)}</p>
+                                <p className="text-amber-400 font-medium">Net Salary: ₹{formatIndianNumber(data.netSalary)}</p>
                               )}
                               {data.grossSalary !== undefined && (
                                 <p className="text-slate-300">Gross: ₹{formatIndianNumber(data.grossSalary)}</p>

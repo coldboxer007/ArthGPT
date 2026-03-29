@@ -191,7 +191,7 @@ function MetricCard({
         <span className="text-3xl font-bold text-white font-mono">{value}</span>
       </div>
       {subtext && (
-        <p className={`mt-3 text-sm font-medium ${positive ? 'text-teal-400' : 'text-red-400'}`}>
+        <p className={`mt-3 text-sm font-medium ${positive ? 'text-amber-400' : 'text-red-400'}`}>
           {subtext}
         </p>
       )}
@@ -439,7 +439,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
         </p>
         <button
           onClick={() => pipeline.execute(fireInput)}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 text-[#0a0a0a] font-semibold hover:bg-teal-400 transition-colors"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold hover:bg-amber-400 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Retry Analysis
@@ -470,7 +470,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
         </p>
         <button
           onClick={() => pipeline.execute(fireInput)}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 text-[#0a0a0a] font-semibold hover:bg-teal-400 transition-colors"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 text-[#0a0a0a] font-semibold hover:bg-amber-400 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Retry Analysis
@@ -495,15 +495,15 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
             <p className="text-slate-400 mt-1">Probability-based retirement planning with Monte Carlo output.</p>
           </div>
           <div className="px-4 py-2 bg-[#141414] rounded-full border border-[#2a2a2a] self-start flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             <span className="text-sm font-medium text-slate-300">V2 Pipeline</span>
           </div>
         </header>
 
         {(autoFilled.existingMfCorpus || autoFilled.monthlySipCurrent) && (
-          <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-4 flex items-center gap-2 shadow-sm">
-            <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
-            <span className="text-teal-200 text-xs font-medium">
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center gap-2 shadow-sm">
+            <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="text-amber-200 text-xs font-medium">
               FIRE inputs enhanced with data from{' '}
               {[
                 autoFilled.existingMfCorpus && 'Portfolio X-Ray',
@@ -515,10 +515,10 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
           </div>
         )}
 
-        <div className="p-8 rounded-2xl bg-[#141414] border border-teal-500/30 text-center relative overflow-hidden shadow-lg">
+        <div className="p-8 rounded-2xl bg-[#141414] border border-amber-500/30 text-center relative overflow-hidden shadow-lg">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00e5ff] to-[#10d5ff]" />
           <h3 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
-            <span className="text-teal-400">{fmtPercent(data.successProbability)}</span> success probability
+            <span className="text-amber-400">{fmtPercent(data.successProbability)}</span> success probability
           </h3>
           <p className="text-lg text-slate-300 max-w-3xl mx-auto">
             {data.roadmapHeadline}
@@ -608,7 +608,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
                         <p className="text-sm text-white font-medium">{source.label}</p>
                         <p className="text-xs text-slate-500">{source.url || 'Source metadata provided by backend'}</p>
                       </div>
-                      <p className="text-xs text-teal-400 font-mono">{source.retrievedAt || data.macroAsOf || 'n/a'}</p>
+                      <p className="text-xs text-amber-400 font-mono">{source.retrievedAt || data.macroAsOf || 'n/a'}</p>
                     </div>
                   </div>
                 ))
@@ -663,13 +663,13 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
                 timeline.map((item, index) => (
                   <div key={`${item.title}-${index}`} className="px-4 py-3 rounded-xl bg-[#0a0a0a] border border-[#2a2a2a]">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center font-mono text-xs shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center font-mono text-xs shrink-0">
                         {index + 1}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm text-white font-medium">{item.title}</p>
                         <p className="text-xs text-slate-400 mt-1">{item.detail}</p>
-                        {item.milestone && <p className="text-[10px] text-teal-500 mt-2">{item.milestone}</p>}
+                        {item.milestone && <p className="text-[10px] text-amber-500 mt-2">{item.milestone}</p>}
                       </div>
                     </div>
                   </div>
@@ -685,7 +685,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
                     <div key={`${action.title}-${index}`} className="rounded-xl bg-[#0a0a0a] border border-[#2a2a2a] p-4">
                       <p className="text-sm text-white font-medium">{action.title}</p>
                     <p className="text-xs text-slate-400 mt-1">{action.detail || action.impact}</p>
-                    {action.impact && <p className="text-[10px] text-teal-400 mt-2">{action.impact}</p>}
+                    {action.impact && <p className="text-[10px] text-amber-400 mt-2">{action.impact}</p>}
                   </div>
                 ))}
               </div>
@@ -706,7 +706,7 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
               </div>
               <div className="flex justify-between items-end border-b border-[#2a2a2a] pb-2">
                 <span className="text-slate-400">Life cover gap</span>
-                <span className={`text-xl font-mono ${data.insuranceGap > 0 ? 'text-red-400' : 'text-teal-400'}`}>
+                <span className={`text-xl font-mono ${data.insuranceGap > 0 ? 'text-red-400' : 'text-amber-400'}`}>
                   {fmtCurrency(data.insuranceGap)}
                 </span>
               </div>
@@ -752,8 +752,8 @@ export function FIRERoadmap({ profile }: { profile: UserProfile }) {
 
         <div className="mt-6 p-5 rounded-2xl bg-[#141414] border border-[#2a2a2a]">
           <div className="flex items-center gap-2 mb-3">
-            <ShieldAlert className="w-4 h-4 text-teal-400" />
-            <span className="text-xs font-bold uppercase tracking-wider text-teal-400">Mandatory Compliance Disclaimer</span>
+            <ShieldAlert className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Mandatory Compliance Disclaimer</span>
           </div>
           <p className="text-[11px] text-slate-500 leading-relaxed">
             This analysis is generated by ChanakAI for educational purposes only. Monte Carlo outputs express probability, not certainty. Actual market conditions may differ materially from simulated scenarios. Please consult a qualified financial professional before making investment decisions.
